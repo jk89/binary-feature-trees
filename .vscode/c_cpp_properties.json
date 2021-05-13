@@ -1,7 +1,14 @@
 {
     "configurations": [
         {
-            "name": "1",
+            "name": "Linux",
+            "includePath": [
+                "${workspaceFolder}/**"
+            ],
+            "defines": [],
+            "compilerPath": "/usr/bin/gcc",
+            "cStandard": "gnu11",
+            "cppStandard": "c++14",
             "configurationProvider": "b2.catkin_tools",
             "intelliSenseMode": "${default}"
         }
