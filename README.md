@@ -31,3 +31,10 @@ ext install betwo.b2-catkin-tools
 
 
 https://marketplace.visualstudio.com/items?itemName=betwo.b2-catkin-tools
+
+
+6.
+
+catkin build
+./devel/lib/trainer/trainer 
+Hello World2
