@@ -1,0 +1,10 @@
+{
+    "configurations": [
+        {
+            "name": "1",
+            "configurationProvider": "b2.catkin_tools",
+            "intelliSenseMode": "${default}"
+        }
+    ],
+    "version": 4
+}
