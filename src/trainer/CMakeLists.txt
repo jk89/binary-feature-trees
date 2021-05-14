@@ -206,7 +206,7 @@ find_package( OpenCV REQUIRED )
 
 set(OpenCV_INCLUDE_DIRS
   /usr/local/include
-  /usr/local/include/opencv2
+  /usr/local/include/opencv4
 )
 
 set(OpenCV_LIB_DIR
@@ -224,6 +224,5 @@ link_directories(${OpenCV_LIB_DIR})
 add_executable(${PROJECT_NAME} src/trainer.cpp)
 target_link_libraries(${PROJECT_NAME} ${OpenCV_LIBS})
 
-include_directories( ${OpenCV_INCLUDE_DIRS} )
 # add_executable( DisplayImage DisplayImage.cpp )
-target_link_libraries( ${PROJECT_NAME} ${OpenCV_LIBS} )
+#target_link_libraries( ${PROJECT_NAME} ${OpenCV_LIBS} )
