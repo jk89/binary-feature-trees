@@ -201,6 +201,21 @@ include_directories(
 ## Add folders to be run by python nosetests
 # catkin_add_nosetests(test)
 
+FIND_PACKAGE( Boost 1.40 COMPONENTS program_options REQUIRED )
+
+#INCLUDE_DIRECTORIES( ${Boost_INCLUDE_DIR} )
+set(Boost_INCLUDE_DIR
+  /usr/include
+  /usr/include/boost
+)
+
+set(Boost_LIBRARIES
+    /usr/lib 
+    /usr/lib/x86_64-linux-gnu
+)
+
+#ADD_EXECUTABLE( anyExecutable myMain.cpp )
+
 
 find_package( OpenCV REQUIRED )
 
@@ -223,6 +238,7 @@ include_directories(${OpenCV_INCLUDE_DIRS})
 link_directories(${OpenCV_LIB_DIR})
 add_executable(${PROJECT_NAME} src/trainer.cpp)
 target_link_libraries(${PROJECT_NAME} ${OpenCV_LIBS})
+target_link_libraries(${PROJECT_NAME} LINK_PUBLIC ${Boost_LIBRARIES})
 
 # add_executable( DisplayImage DisplayImage.cpp )
 #target_link_libraries( ${PROJECT_NAME} ${OpenCV_LIBS} )
