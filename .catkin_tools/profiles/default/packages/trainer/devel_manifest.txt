@@ -1,0 +1,6 @@
+trainer
+/home/jonathan/Code/UAV/binary-feature-trees/devel/.private/trainer/cmake.lock /home/jonathan/Code/UAV/binary-feature-trees/devel/./cmake.lock
+/home/jonathan/Code/UAV/binary-feature-trees/devel/.private/trainer/share/trainer/cmake/trainerConfig.cmake /home/jonathan/Code/UAV/binary-feature-trees/devel/share/trainer/cmake/trainerConfig.cmake
+/home/jonathan/Code/UAV/binary-feature-trees/devel/.private/trainer/share/trainer/cmake/trainerConfig-version.cmake /home/jonathan/Code/UAV/binary-feature-trees/devel/share/trainer/cmake/trainerConfig-version.cmake
+/home/jonathan/Code/UAV/binary-feature-trees/devel/.private/trainer/lib/trainer/trainer /home/jonathan/Code/UAV/binary-feature-trees/devel/lib/trainer/trainer
+/home/jonathan/Code/UAV/binary-feature-trees/devel/.private/trainer/lib/pkgconfig/trainer.pc /home/jonathan/Code/UAV/binary-feature-trees/devel/lib/pkgconfig/trainer.pc
