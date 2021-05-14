@@ -48,17 +48,17 @@ int main(int argc, char **argv)
     {
         std::string line;
         int idx = 0;
+        vector<uint8_t> data = {};
+        // for each line in file
         while (std::getline(file, line))
         {
-            if (idx < 1) {
+            if (idx < 1)
+            {
                 idx++;
                 continue;
             };
-            // using printf() in all tests for consistency
-            // printf("%s", line.c_str());
             std::string cline;
             cline = line.c_str();
-            // cout << cline << endl;
             vector<std::string> strs;
             boost::split(strs, line, boost::is_any_of(" ")); // space delimeter
             strs.erase(strs.begin());
@@ -66,18 +66,46 @@ int main(int argc, char **argv)
             strs.erase(strs.begin());
             strs.erase(strs.begin() + 34);
             strs.erase(strs.begin() + 34);
-            cout << "* size of the vector: " << strs.size() << endl;
+            // cout << "* size of the vector: " << strs.size() << endl;
+            // decode feature
+            uint8_t feature[32] = {};
+            int featureIdx = 0;
             for (auto it = strs.begin(); it != strs.end(); ++it)
             {
                 std::string cfeature = *it;
-                // std::cout << cfeature << std::endl;
                 int icfeature = std::stoi(cfeature);
-                // std::cout << icfeature << endl;
                 uint8_t ui8feature = icfeature;
-                cout << unsigned(ui8feature) << " ";
+                feature[featureIdx] = ui8feature;
+                data.push_back(ui8feature);
+                // cout << unsigned(feature[featureIdx]) << " ";
+                featureIdx++;
             }
+
+            // Mat mFeature(32, 1, CV_64FC1, a)
+
+            /*
+                double a[] = { 1,2,3,4,5,6, 7,8,9 }; //matrix m0
+                double b[] = { 2,4,5,6,8,10,12,13,1 };  //matrix m1
+                // rows, cols, format, data
+                Mat m0(3, 3, CV_64FC1, a);
+                Mat m1(3, 3, CV_64FC1, b);
+            */
+
             idx++;
         }
         file.close();
+        cout << "loaded " << data.size() << " ORB vectors" << endl;
+
+        // convert to array
+        // vector<uint8_t>
+
+        uint8_t *a = &data[0];
+
+        cout << "converted to arr " << endl;
+
+        // Mat m0(3, 3, CV_64FC1, a);
+
+        // process data.. data
+        // Mat m0(3, 3, CV_64FC1, a)
     }
 }
