@@ -200,3 +200,30 @@ include_directories(
 
 ## Add folders to be run by python nosetests
 # catkin_add_nosetests(test)
+
+
+find_package( OpenCV REQUIRED )
+
+set(OpenCV_INCLUDE_DIRS
+  /usr/local/include
+  /usr/local/include/opencv2
+)
+
+set(OpenCV_LIB_DIR
+  /usr/local/lib
+)
+
+set(OpenCV_LIBS
+  opencv_core
+  opencv_highgui
+  opencv_imgcodecs
+)
+
+include_directories(${OpenCV_INCLUDE_DIRS})
+link_directories(${OpenCV_LIB_DIR})
+add_executable(${PROJECT_NAME} src/trainer.cpp)
+target_link_libraries(${PROJECT_NAME} ${OpenCV_LIBS})
+
+include_directories( ${OpenCV_INCLUDE_DIRS} )
+# add_executable( DisplayImage DisplayImage.cpp )
+target_link_libraries( ${PROJECT_NAME} ${OpenCV_LIBS} )
