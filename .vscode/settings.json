@@ -1,5 +1,9 @@
 {
     "files.exclude": {
         ".catkin_tools/": true,
+    },
+    "files.associations": {
+        "fstream": "cpp",
+        "iosfwd": "cpp"
     }
 }

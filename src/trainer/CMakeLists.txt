@@ -200,19 +200,21 @@ include_directories(
 
 ## Add folders to be run by python nosetests
 # catkin_add_nosetests(test)
-
-FIND_PACKAGE( Boost 1.40 COMPONENTS program_options REQUIRED )
+set(Boost_USE_STATIC_LIBS OFF) 
+set(Boost_USE_MULTITHREADED ON)  
+set(Boost_USE_STATIC_RUNTIME OFF) 
+FIND_PACKAGE( Boost 1.40 COMPONENTS filesystem system REQUIRED )
 
 #INCLUDE_DIRECTORIES( ${Boost_INCLUDE_DIR} )
-set(Boost_INCLUDE_DIR
-  /usr/include
-  /usr/include/boost
-)
+#set(Boost_INCLUDE_DIR
+#  /usr/include
+#  /usr/include/boost
+#)
 
-set(Boost_LIBRARIES
-    /usr/lib 
-    /usr/lib/x86_64-linux-gnu
-)
+#set(Boost_LIBRARIES
+#  /usr/lib 
+#    /usr/lib/x86_64-linux-gnu
+#)
 
 #ADD_EXECUTABLE( anyExecutable myMain.cpp )
 
