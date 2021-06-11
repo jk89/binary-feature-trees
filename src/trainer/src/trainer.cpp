@@ -122,6 +122,74 @@ cv::Mat load_data()
     return m;
 }
 
+
+int random(int min, int max) //range : [min, max]
+{
+   static bool first = true;
+   if (first) 
+   {  
+      srand( time(NULL) ); //seeding for the first time only!
+      first = false;
+   }
+   return min + rand() % (( max + 1 ) - min);
+}
+
+int hammingDistance(cv::Mat v1, cv::Mat v2) {
+    cout << "v1 " << cv::format(v1, cv::Formatter::FMT_PYTHON) << endl;
+    cout << "v1 rows " << v1.rows << endl;
+    cout << "v1 cols " << v1.cols << endl;
+
+    cout << "v2 " << cv::format(v2, cv::Formatter::FMT_PYTHON) << endl;
+    cout << "v2 rows " << v2.rows << endl;
+    cout << "v2 cols " << v2.cols << endl;
+
+    // result += popCountTable[a[i] ^ b2[i]];
+    // bitwise_xor(drawing1,drawing2,res);
+    // float * testData1D = (float*)testDataMat.data;
+    // cv::Mat distance;
+    // cv::bitwise_xor(v1, v2, distance);
+    int distance = cv::norm(v1, v2 ,cv::NORM_HAMMING);
+
+    cout << " dist " << distance << endl;
+    return 0;
+}
+
+void seedKernel(cv::Mat data, int currentCentroidIndex, vector<int> centroids, int k) // data, dataIdValue, centroids, k, metric
+{
+    cout << "seed kernel " << currentCentroidIndex << endl;
+    // for the whole dataset of features
+    for (int r = 0; r < data.rows; r++) {
+        cout << "  r " << r << endl;
+        // extract feature from row index
+        cv::Mat currentDatasetFeature = data.row(r);
+        int minDistance = INT_MAX;
+        // for each already selected centroid
+        for (int c = 0; c < centroids.size(); c++) {
+            cout << " c " << c << endl;
+            int currentCentroidDataSetIndex = centroids[c];
+            cv::Mat currentCentroidFeature = data.row(currentCentroidDataSetIndex);
+            // currentDatasetFeature
+            hammingDistance(currentDatasetFeature, currentCentroidFeature);
+
+        }
+    }
+}
+
+void seedClusters(cv::Mat data, int k) // data, k, metric
+{
+    // largest index
+    const int dataLength = data.rows;
+    vector<int> centroids = {};
+
+    // add random first centroid index
+    centroids.push_back(random(0, dataLength - 1));
+
+    // for the rest of k
+    for (int i = 0; i < k -1; i++) {
+        seedKernel(data, i, centroids, k);
+    }
+}
+
 int main(int argc, char **argv)
 {
     cv::Mat m;
@@ -129,4 +197,5 @@ int main(int argc, char **argv)
     cout << "details of m rows" << m.rows << " cols " << m.cols << " tyoe " << m.type() << endl;
     cout << "first row: " << cv::format(m.row(0), cv::Formatter::FMT_PYTHON) << endl;
     cout << "second row: " << cv::format(m.row(1), cv::Formatter::FMT_PYTHON) << endl;
+    seedClusters(m, 8);
 }
