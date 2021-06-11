@@ -17,6 +17,14 @@ namespace fs = boost::filesystem;
 
 const char *filename = "./data/ORBvoc.txt";
 
+struct compareMats
+{
+    bool operator()(const cv::Mat &a, const cv::Mat &b) const
+    {
+        return sum(b - a)[0] > 0;
+    }
+};
+
 /**
  * \brief   Return the filenames of all files that have the specified extension
  *          in the specified directory and all subdirectories.
@@ -80,7 +88,7 @@ int main(int argc, char **argv)
                 int icfeature = std::stoi(cfeature);
                 uint8_t ui8feature = icfeature;
                 feature[featureIdx] = ui8feature;
-                
+
                 // cout << unsigned(feature[featureIdx]) << " ";
                 featureIdx++;
             }
@@ -112,15 +120,39 @@ int main(int argc, char **argv)
 
         cv::Mat m = cv::Mat(data.size(), 32, CV_8U); // row col
 
-
-        memcpy(m.data, data.data(), data.size()*sizeof(array<uint8_t, 32>));
+        memcpy(m.data, data.data(), data.size() * sizeof(array<uint8_t, 32>));
 
         cout << "details of m rows" << m.rows << " cols " << m.cols << " tyoe " << m.type() << endl;
         cout << "aaa: " << cv::format(m.row(0), cv::Formatter::FMT_PYTHON) << endl;
         cout << "aaa: " << cv::format(m.row(1), cv::Formatter::FMT_PYTHON) << endl;
 
-        // cout << "M: " << cv::format(m, cv::Formatter::FMT_PYTHON) << endl;
+        std::set<cv::Mat, compareMats> nonDuplicatedPairs;
 
+        for (int i = 0; i < m.rows; ++i)
+        {
+            nonDuplicatedPairs.insert(m.row(i));
+        }
+
+        cout << " unique features " << nonDuplicatedPairs.size() << endl;
+
+        // unique vector
+        /*
+theVector.assign(theSet.begin(), theSet.end());
+        */
+        vector<cv::Mat> dedup_vec = {};
+
+        // Iterate till the end of set
+        std::set<cv::Mat, compareMats>::iterator it = nonDuplicatedPairs.begin();
+        while (it != nonDuplicatedPairs.end())
+        {
+            // Print the element
+            std::cout <<  cv::format((*it), cv::Formatter::FMT_PYTHON)  << " , ";
+            //Increment the iterator
+            it++;
+        }
+        // dedup_vec.assign()
+
+        // cout << "M: " << cv::format(nonDuplicatedPairs, cv::Formatter::FMT_PYTHON) << endl;
 
         // Mat m0(3, 3, CV_64FC1, a);
 
