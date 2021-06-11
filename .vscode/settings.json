@@ -68,6 +68,10 @@
         "typeinfo": "cpp",
         "valarray": "cpp",
         "variant": "cpp",
-        "bit": "cpp"
+        "bit": "cpp",
+        "csignal": "cpp",
+        "strstream": "cpp",
+        "cfenv": "cpp",
+        "*.ipp": "cpp"
     }
 }

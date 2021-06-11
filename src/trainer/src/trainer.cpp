@@ -1,4 +1,5 @@
 #include <opencv2/opencv.hpp>
+#include <opencv2/core/mat.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/algorithm/string.hpp>
 #include <iostream>
@@ -10,6 +11,8 @@
 // using namespace cv;
 using namespace std;
 using namespace boost::filesystem;
+using namespace std::chrono;
+
 namespace fs = boost::filesystem;
 
 const char *filename = "./data/ORBvoc.txt";
@@ -48,7 +51,7 @@ int main(int argc, char **argv)
     {
         std::string line;
         int idx = 0;
-        vector<uint8_t> data = {};
+        vector<array<uint8_t, 32>> data = {}; // uint8_t[32]
         // for each line in file
         while (std::getline(file, line))
         {
@@ -68,7 +71,8 @@ int main(int argc, char **argv)
             strs.erase(strs.begin() + 34);
             // cout << "* size of the vector: " << strs.size() << endl;
             // decode feature
-            uint8_t feature[32] = {};
+            // uint8_t feature[32] = {};
+            array<uint8_t, 32> feature = {};
             int featureIdx = 0;
             for (auto it = strs.begin(); it != strs.end(); ++it)
             {
@@ -76,10 +80,12 @@ int main(int argc, char **argv)
                 int icfeature = std::stoi(cfeature);
                 uint8_t ui8feature = icfeature;
                 feature[featureIdx] = ui8feature;
-                data.push_back(ui8feature);
+                
                 // cout << unsigned(feature[featureIdx]) << " ";
                 featureIdx++;
             }
+
+            data.push_back(feature);
 
             // Mat mFeature(32, 1, CV_64FC1, a)
 
@@ -99,13 +105,33 @@ int main(int argc, char **argv)
         // convert to array
         // vector<uint8_t>
 
-        uint8_t *a = &data[0];
+        // uint8_t *a = data.data(); // &data[0];
 
-        cout << "converted to arr " << endl;
+        // cout << "converted to arr " << endl;
+        cout << "done " << endl;
+
+        cv::Mat m = cv::Mat(data.size(), 32, CV_8U); // row col
+
+
+        memcpy(m.data, data.data(), data.size()*sizeof(array<uint8_t, 32>));
+
+        cout << "details of m rows" << m.rows << " cols " << m.cols << " tyoe " << m.type() << endl;
+        cout << "aaa: " << cv::format(m.row(0), cv::Formatter::FMT_PYTHON) << endl;
+        cout << "aaa: " << cv::format(m.row(1), cv::Formatter::FMT_PYTHON) << endl;
+
+        // cout << "M: " << cv::format(m, cv::Formatter::FMT_PYTHON) << endl;
+
 
         // Mat m0(3, 3, CV_64FC1, a);
 
         // process data.. data
         // Mat m0(3, 3, CV_64FC1, a)
     }
+
+    /*std::chrono::Timer clock; // Timer<milliseconds, steady_clock>
+
+    clock.tick();
+    clock.tock();*/
+
+    // cout << "Run time = " << clock.duration().count() << " ms\n";
 }

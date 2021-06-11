@@ -17,9 +17,9 @@
         {
             // See https://go.microsoft.com/fwlink/?LinkId=733558
             // for the documentation about the tasks.json format
-            "label": "echo",
+            "label": "run",
             "type": "shell",
-            "command": "echo Hello"
+            "command": "./devel/lib/trainer/trainer"
         }
     ]
 }
