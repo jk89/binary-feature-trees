@@ -17,6 +17,16 @@ namespace fs = boost::filesystem;
 const char *filename = "./data/ORBvoc.txt";
 const auto processor_count = std::thread::hardware_concurrency();
 
+struct ConcurrentIndexRange
+{
+    int start;
+    int end;
+};
+
+struct CentroidDataIndexPair {
+    int centroidIndex;
+    int dataGlobalIndex;
+};
 struct compareFeatureVecs
 {
     bool operator()(const array<uint8_t, 32> &a, const array<uint8_t, 32> &b) const
@@ -209,20 +219,73 @@ vector<int> seedClusters(cv::Mat data, int k) // data, k, metric
     return centroids;
 }
 
-void optimiseClusterMembership(cv::Mat data, int k, vector<int> centroidSeedIndices)
+// (clusterKernel) cv::Mat data, cv::Mat currentCentroidData, ConcurrentIndexRange range, vector<int> centroidIndices, cv::Mat distances
+
+// dep'd as arg cv::Mat currentCentroidData,
+std::mutex clusterMtx;           // mutex for critical section
+
+void clusterKernel(vector<int> &dataIndices, cv::Mat &data, ConcurrentIndexRange &range, vector<int> &centroidIndices, map<int, bool> &isCentroid, vector<CentroidDataIndexPair> &threadResults) // map<int, vector<int>> &clusterMembership
+{
+    /*vector<CentroidDataIndexPair> localThreadResults;
+
+    // iterate data within range
+    for (int i = range.start; i <= range.end; i++)
+    {
+        const bool isDataPointACentroid = isCentroid[i];
+        if (isDataPointACentroid == true) continue; // skip calculating optimal membership for centroids as they are not members of any cluster
+        
+        // convert range index to data index
+        int dataIndex = dataIndices[i];
+        const cv::Mat currentFeatureData = data.row(dataIndex);
+
+        int nearestCentroidIndex = -1;
+        int nearestDistance = INT_MAX;
+
+        // find the closest centroid, if the current data point index means it is a centroid then ?
+        for (int c = 0; c < centroidIndices.size(); c++)
+        {
+            const int centroidIndex = centroidIndices[c];
+            cv::Mat currentCentroidData = data.row(centroidIndex);
+
+            // calculate pairwise hamming distance
+            const int distance = hammingDistance(currentCentroidData, currentFeatureData);
+
+            if (distance < nearestDistance) {
+                nearestCentroidIndex = centroidIndex;
+                nearestDistance = distance;
+            }
+        }
+
+        // clusterMembership[nearestCentroidIndex].push_back(dataIndex);
+        CentroidDataIndexPair indexPair = {nearestCentroidIndex, dataIndex};
+        localThreadResults.push_back(indexPair);
+    }*/
+    // clusterMtx
+    // clusterMtx.lock();
+    // threadResults.insert(localThreadResults.end(), localThreadResults.begin(), localThreadResults.end());
+    // clusterMtx.unlock();
+}
+
+void optimiseClusterMembership(vector<int> &dataIndices, cv::Mat &data, int k, vector<int> &centroidSeedIndices)
 { // data, n=4, metric=hammingVector, intitalClusterIndices=None
     // centroidData
     // processor_count
-    const int dataRowCount = data.rows;
+    // create centroidIndexMap
+    map<int, bool> isCentroid = {};
+    map<int, vector<int>> clusterMembership = {};
+
+    const int dataRowCount = dataIndices.size(); // data.rows;
     const int threadPool = processor_count;
     const int batchSize = (int)dataRowCount / threadPool;
-    int lastBatchSize = batchSize;
+    // int lastBatchSize = batchSize;
     const int globalRemainder = dataRowCount - (batchSize * threadPool);
-    lastBatchSize = lastBatchSize + globalRemainder;
+    // lastBatchSize = lastBatchSize + globalRemainder;
     cout << " thread pool " << threadPool << endl;
     cout << " batch size " << batchSize << endl;
-    cout << " last batch " << lastBatchSize << endl;
+    // cout << " last batch " << lastBatchSize << endl;
     cout << " total " << dataRowCount << endl;
+
+    vector<ConcurrentIndexRange> ranges = {};
 
     // so what are the ranges
     for (int i = 0; i < threadPool; i++)
@@ -233,10 +296,45 @@ void optimiseClusterMembership(cv::Mat data, int k, vector<int> centroidSeedIndi
         {
             // isLast = true;
             rangeEnd = rangeEnd + globalRemainder;
-
         }
         cout << "start " << rangeStart << " end " << rangeEnd << endl;
+        ConcurrentIndexRange range = {rangeStart, rangeEnd};
+        ranges.push_back(range);
     }
+
+    // centroidMembership
+
+    // for each centroid
+    for (int c = 0; c < centroidSeedIndices.size(); c++)
+    {
+        const int cCentroidIndex = centroidSeedIndices[c];
+        isCentroid[cCentroidIndex] = true;
+        clusterMembership[cCentroidIndex] = {};
+    }
+
+    //create empty distances matrix
+    // cv::Mat distances = cv::Mat(data.size(), 1, CV_8U);
+
+    // perform the distance between each data feature and the current centroid
+    // const int centroidIndex = centroidSeedIndices[0];
+    // const cv::Mat centroidData = data.row(centroidIndex);
+
+    vector<thread> threads(threadPool);
+    vector<CentroidDataIndexPair> threadResults;
+
+    for (int i = 0; i < threadPool; i++)
+    {
+        // void clusterKernel(vector<int> &dataIndices, cv::Mat &data, ConcurrentIndexRange &range, vector<int> &centroidIndices, map<int, bool> &isCentroid, map<int, vector<int>> &clusterMembership)
+        // vector<CentroidDataIndexPair> &threadResults
+        threads[i] = thread(clusterKernel, ref(dataIndices), ref(data), ref(ranges[i]), ref(centroidSeedIndices), ref(isCentroid), ref(threadResults)); // thread(doSomething, i + 1);
+    }
+
+    for (auto &th : threads)
+    {
+        th.join();
+    }
+
+    // m = cv::Mat(dedupVectorData.size(), 32, CV_8U)
 }
 
 int main(int argc, char **argv)
@@ -246,9 +344,14 @@ int main(int argc, char **argv)
     cout << "details of m rows" << m.rows << " cols " << m.cols << " tyoe " << m.type() << endl;
     cout << "first row: " << cv::format(m.row(0), cv::Formatter::FMT_PYTHON) << endl;
     cout << "second row: " << cv::format(m.row(1), cv::Formatter::FMT_PYTHON) << endl;
-    const vector<int> centroids = seedClusters(m, 8);
+    vector<int> centroids = seedClusters(m, 8);
     for (auto i = centroids.begin(); i != centroids.end(); ++i)
         std::cout << *i << ' ';
+    
+    vector<int> indices;
+    for (int i = 0; i < m.rows; i++) {
+        indices[i] = i;
+    }
 
-    optimiseClusterMembership(m, 8, centroids);
+    optimiseClusterMembership(indices, m, 8, centroids);
 }
