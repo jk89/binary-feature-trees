@@ -6,6 +6,7 @@
 #include <fstream>
 #include <stdlib.h> /* atoi */
 #include <thread>
+#include <random>
 
 // using namespace cv;
 using namespace std;
@@ -395,7 +396,7 @@ void erase_v4(std::vector<int> &vec, int value)
 
 std::mutex optimiseSelectionCostMtx; // mutex for critical section
 
-void optimiseSelectionCostKernel(cv::Mat &data, ConcurrentIndexRange range, vector<vector<int>> &clusters, vector<tuple<int, int>> tasks, vector<tuple<int, int, long, long>> &resultSet)
+void optimiseSelectionCostKernel(cv::Mat &data, ConcurrentIndexRange &range, vector<vector<int>> &clusters, vector<tuple<int, int>> &tasks, vector<tuple<int, int, long, long>> &resultSet)
 {
     // map<clusterId> => bestCenteroidId, bestCentroidCost, totalCost
     map<int, tuple<int, long, long>> results = {};
@@ -446,7 +447,7 @@ void optimiseSelectionCostKernel(cv::Mat &data, ConcurrentIndexRange range, vect
             results[clusterId] = make_tuple(pointId, cost, cost);
         }
 
-        cout << " done task " << ((float(i) - float(range.start)) * 100) / (range.end - range.start) << endl;
+        cout << "thread id " << this_thread::get_id() << " | done task " << ((float(i) - float(range.start)) * 100) / (range.end - range.start) << endl;
 
         // cout << " done task " << i << endl;
 
@@ -485,7 +486,7 @@ void optimiseCentroidSelectionAndComputeCost(cv::Mat &data, map<int, vector<int>
         vector<int> cluster = clusterMembership[centroid];
         cluster.push_back(centroid);
         clusters.push_back(cluster);
-        cout << " added centroid to cluster " << endl; 
+        cout << " added centroid to cluster " << endl;
         // sort(cluster.begin(), cluster.end());
         for (int j = 0; j < cluster.size(); j++)
         {
@@ -496,6 +497,10 @@ void optimiseCentroidSelectionAndComputeCost(cv::Mat &data, map<int, vector<int>
             // cluster id, data point id, cluster indicies pointer
         }
     }
+    // should stripe tasks based on clusters
+    // so threads get even distribution of clusters
+    std::shuffle(tasks.begin(), tasks.end(), std::random_device());
+
 
     cout << "built tasks" << endl;
     vector<ConcurrentIndexRange> ranges = rangeCalculator(tasks.size(), processor_count);
@@ -503,12 +508,12 @@ void optimiseCentroidSelectionAndComputeCost(cv::Mat &data, map<int, vector<int>
     vector<thread> threads(processor_count);
     vector<tuple<int, int, long, long>> resultSet = {}; // clusterId, bestCentroidId, bestCentroidCost, totalCost
 
-    cout << " about to optimisse selection " << endl; 
+    cout << " about to optimisse selection " << endl;
     for (int i = 0; i < ranges.size(); i++)
     {
         // void optimiseSelectionCostKernel(cv::Mat &data, ConcurrentIndexRange range, vector<tuple<int, int, vector<int>>> tasks, vector<tuple<int, int, long, long>> &resultSet)
 
-        threads[i] = thread{optimiseSelectionCostKernel, ref(data), ranges[i], ref(clusters), tasks, ref(resultSet)};
+        threads[i] = thread{optimiseSelectionCostKernel, ref(data), ref(ranges[i]), ref(clusters), ref(tasks), ref(resultSet)};
     }
     cout << "defined threads agan...." << endl;
     for (auto &th : threads)
@@ -516,7 +521,7 @@ void optimiseCentroidSelectionAndComputeCost(cv::Mat &data, map<int, vector<int>
         th.join();
     }
 
-    cout << " got some results " << endl; 
+    cout << " got some results " << endl;
 
     map<int, tuple<int, long, long>> resultSetAgg = {}; // clusterId => bestCentroidId, bestCentroidCost, totalCost
     for (int i = 0; i < resultSet.size(); i++)
@@ -544,8 +549,8 @@ void optimiseCentroidSelectionAndComputeCost(cv::Mat &data, map<int, vector<int>
         }
     }
 
-    for (map<int, tuple<int, long, long>>::iterator it = resultSetAgg.begin(); it != resultSetAgg.end(); ++it) {
-
+    for (map<int, tuple<int, long, long>>::iterator it = resultSetAgg.begin(); it != resultSetAgg.end(); ++it)
+    {
     }
 
     //         if (results.count(clusterId) > 0)
