@@ -23,7 +23,8 @@ struct ConcurrentIndexRange
     int end;
 };
 
-struct CentroidDataIndexPair {
+struct CentroidDataIndexPair
+{
     int centroidIndex;
     int dataGlobalIndex;
 };
@@ -222,19 +223,20 @@ vector<int> seedClusters(cv::Mat data, int k) // data, k, metric
 // (clusterKernel) cv::Mat data, cv::Mat currentCentroidData, ConcurrentIndexRange range, vector<int> centroidIndices, cv::Mat distances
 
 // dep'd as arg cv::Mat currentCentroidData,
-std::mutex clusterMtx;           // mutex for critical section
+std::mutex clusterMtx; // mutex for critical section
 
 void clusterKernel(vector<int> &dataIndices, cv::Mat &data, ConcurrentIndexRange &range, vector<int> &centroidIndices, map<int, bool> &isCentroid, vector<pair<int, int>> &threadResults) // map<int, vector<int>> &clusterMembership
 {
     // cout << "ok" << endl;
-    vector<pair<int,int>> localThreadResults;
+    vector<pair<int, int>> localThreadResults;
 
     // iterate data within range
     for (int i = range.start; i <= range.end; i++)
     {
         const bool isDataPointACentroid = isCentroid[i];
-        if (isDataPointACentroid == true) continue; // skip calculating optimal membership for centroids as they are not members of any cluster
-        
+        if (isDataPointACentroid == true)
+            continue; // skip calculating optimal membership for centroids as they are not members of any cluster
+
         // convert range index to data index
         int dataIndex = dataIndices[i];
         const cv::Mat currentFeatureData = data.row(dataIndex);
@@ -251,7 +253,8 @@ void clusterKernel(vector<int> &dataIndices, cv::Mat &data, ConcurrentIndexRange
             // calculate pairwise hamming distance
             const int distance = hammingDistance(currentCentroidData, currentFeatureData);
 
-            if (distance < nearestDistance) {
+            if (distance < nearestDistance)
+            {
                 nearestCentroidIndex = centroidIndex;
                 nearestDistance = distance;
             }
@@ -267,6 +270,37 @@ void clusterKernel(vector<int> &dataIndices, cv::Mat &data, ConcurrentIndexRange
     clusterMtx.unlock();
 }
 
+vector<ConcurrentIndexRange> rangeCalculator(int count, int partitions)
+{
+    const int batchSize = (int)count / partitions;
+    const int globalRemainder = count - (batchSize * partitions);
+
+    vector<ConcurrentIndexRange> ranges = {};
+
+    int countPartDiff = count - partitions;
+    if (countPartDiff < 0)
+    {
+        partitions += countPartDiff;
+    }
+
+    // so what are the ranges
+    for (int i = 0; i < partitions; i++)
+    {
+        int rangeStart = i * batchSize;
+        int rangeEnd = ((i + 1) * batchSize) - 1;
+        if (i == partitions - 1)
+        {
+            // isLast = true;
+            rangeEnd = rangeEnd + globalRemainder;
+        }
+        cout << "start " << rangeStart << " end " << rangeEnd << endl;
+        ConcurrentIndexRange range = {rangeStart, rangeEnd};
+        ranges.push_back(range);
+    }
+
+    return ranges;
+}
+
 map<int, vector<int>> optimiseClusterMembership(vector<int> &dataIndices, cv::Mat &data, vector<int> &centroidSeedIndices)
 { // data, n=4, metric=hammingVector, intitalClusterIndices=None
     // centroidData
@@ -277,31 +311,8 @@ map<int, vector<int>> optimiseClusterMembership(vector<int> &dataIndices, cv::Ma
 
     const int dataRowCount = dataIndices.size(); // data.rows;
     const int threadPool = processor_count;
-    const int batchSize = (int)dataRowCount / threadPool;
-    // int lastBatchSize = batchSize;
-    const int globalRemainder = dataRowCount - (batchSize * threadPool);
-    // lastBatchSize = lastBatchSize + globalRemainder;
-    cout << " thread pool " << threadPool << endl;
-    cout << " batch size " << batchSize << endl;
-    // cout << " last batch " << lastBatchSize << endl;
-    cout << " total " << dataRowCount << endl;
 
-    vector<ConcurrentIndexRange> ranges = {};
-
-    // so what are the ranges
-    for (int i = 0; i < threadPool; i++)
-    {
-        int rangeStart = i * batchSize;
-        int rangeEnd = ((i + 1) * batchSize) - 1;
-        if (i == threadPool - 1)
-        {
-            // isLast = true;
-            rangeEnd = rangeEnd + globalRemainder;
-        }
-        cout << "start " << rangeStart << " end " << rangeEnd << endl;
-        ConcurrentIndexRange range = {rangeStart, rangeEnd};
-        ranges.push_back(range);
-    }
+    vector<ConcurrentIndexRange> ranges = rangeCalculator(dataRowCount, threadPool);
 
     // centroidMembership
 
@@ -327,7 +338,7 @@ map<int, vector<int>> optimiseClusterMembership(vector<int> &dataIndices, cv::Ma
     {
         // void clusterKernel(vector<int> &dataIndices, cv::Mat &data, ConcurrentIndexRange &range, vector<int> &centroidIndices, map<int, bool> &isCentroid, map<int, vector<int>> &clusterMembership)
         // vector<CentroidDataIndexPair> &threadResults
-        // 
+        //
         threads[i] = (thread{clusterKernel, ref(dataIndices), ref(data), ref(ranges[i]), ref(centroidSeedIndices), ref(isCentroid), ref(threadResults)}); // thread(doSomething, i + 1);
     }
 
@@ -336,17 +347,204 @@ map<int, vector<int>> optimiseClusterMembership(vector<int> &dataIndices, cv::Ma
         th.join();
     }
 
-
     cout << " RESULT SET SIZE " << threadResults.size() << endl;
 
-
-    for (int i = 0; i < threadResults.size(); i++) {
+    for (int i = 0; i < threadResults.size(); i++)
+    {
         clusterMembership[threadResults[i].first].push_back(threadResults[i].second);
         // cout << " pair results, data index: " << threadResults[i].second << " centroid index " << threadResults[i].first << endl;
     }
     // m = cv::Mat(dedupVectorData.size(), 32, CV_8U)
     // map<int, vector<int>> clusterMembership = {};
     return clusterMembership;
+}
+
+/*
+template <class myType>
+myType getKey (myType a) {
+ return (a>b?a:b);
+}
+*/
+
+vector<int> getClusterKeys(map<int, vector<int>> m)
+{
+    //     map<int, vector<int>> clusterMembership = {};
+    std::vector<int> keys;
+    for (std::map<int, vector<int>>::iterator it = m.begin(); it != m.end(); ++it)
+    {
+        keys.push_back(it->first);
+    }
+    return keys;
+}
+
+// Surt's code, doesn't preserve sorted order
+void erase_v4(std::vector<int> &vec, int value)
+{
+    // get the range in 2*log2(N), N=vec.size()
+    auto bounds = std::equal_range(vec.begin(), vec.end(), value);
+
+    // calculate the index of the first to be deleted O(1)
+    auto last = vec.end() - std::distance(bounds.first, bounds.second);
+
+    // swap the 2 ranges O(equals) , equal = std::distance(bounds.first, bounds.last)
+    std::swap_ranges(bounds.first, bounds.second, last);
+
+    // erase the victims O(equals)
+    vec.erase(last, vec.end());
+}
+
+std::mutex optimiseSelectionCostMtx; // mutex for critical section
+
+void optimiseSelectionCostKernel(cv::Mat &data, ConcurrentIndexRange range, vector<tuple<int, int, vector<int>>> tasks, vector<tuple<int, int, long, long>> &resultSet)
+{
+    // map<clusterId> => bestCenteroidId, bestCentroidCost, totalCost
+    map<int, tuple<int, long, long>> results = {};
+    for (int i = range.start; i <= range.end; i++)
+    {
+        auto task = tasks[i];
+        int clusterId = get<0>(task);
+        int pointId = get<1>(task);
+        vector<int> cluster = get<2>(task);
+        // get data index of point id
+        const int pointGlobalIndex = cluster[pointId];
+        // remove pointId from cluster
+        cluster.erase(cluster.begin() + pointId);
+
+        auto candidateData = data.row(pointGlobalIndex);
+
+        // long sumCost = 0;
+        // long bestCost = LONG_MAX;
+        // int bestCentroidIndex = - 1;
+
+        long cost = 0;
+        for (int j = 0; j < cluster.size(); j++)
+        {
+            auto dataData = data.row(cluster[j]);
+            int distance = hammingDistance(candidateData, dataData);
+            cost += distance;
+        }
+
+        if (results.count(clusterId) > 0)
+        {
+            // exists
+            // bestCenteroidId, bestCentroidCost, totalCost
+            int bestCentroidCost = get<1>(results[clusterId]);
+            int bestCentroidIndex = get<0>(results[clusterId]);
+            long newTotal = get<2>(results[clusterId]) + cost;
+
+            if (cost < bestCentroidCost)
+            {
+                bestCentroidCost = cost;
+                bestCentroidIndex = pointId;
+            }
+            results[clusterId] = make_tuple(bestCentroidIndex, bestCentroidCost, newTotal);
+
+            // auto existingResults = results[clusterId];
+        }
+        else
+        {
+            results[clusterId] = make_tuple(pointId, cost, cost);
+        }
+
+        // mymap.count(c)>0
+    }
+
+    vector<tuple<int, int, long, long>> localResultSet = {}; // clusterId, bestCentroidId, bestCentroidCost, totalCost
+
+    for (map<int, tuple<int, long, long>>::iterator it = results.begin(); it != results.end(); ++it)
+    {
+        // keys.push_back(it->first);
+        auto key = it->first;
+        auto value = it->second;
+
+        localResultSet.push_back(make_tuple(key, get<0>(value), get<1>(value), get<2>(value)));
+    }
+
+    //
+    optimiseSelectionCostMtx.lock();
+    resultSet.insert(resultSet.end(), localResultSet.begin(), localResultSet.end());
+    optimiseSelectionCostMtx.unlock();
+}
+
+void optimiseCentroidSelectionAndComputeCost(cv::Mat &data, map<int, vector<int>> &clusterMembership)
+{
+    vector<int> centroids = getClusterKeys(clusterMembership);
+    vector<vector<int>> clusters = {};
+
+    cout << " got centroid keys " << endl;
+    // jobs = [];
+    // <centroidIdentifier{0,1,2,4},dataIdentifier{0,1,....1000000}
+    vector<tuple<int, int, vector<int>>> tasks = {};
+    for (int i = 0; i < centroids.size(); i++)
+    {
+        int centroid = centroids[i];
+        vector<int> cluster = clusterMembership[centroid];
+        cluster.push_back(centroid);
+        clusters.push_back(cluster);
+        cout << " added centroid to cluster " << endl; 
+        // sort(cluster.begin(), cluster.end());
+        for (int j = 0; j < cluster.size(); j++)
+        {
+            cout << " pushing tasks " << endl;
+            // TODO FIXE ME, rather than pushing the cluster, push the cluster index and parse the reference to the kernel
+            tasks.push_back(make_tuple(i, j, cluster)); // j is the data point index
+            // for each task we need to know:
+            // cluster id, data point id, cluster indicies pointer
+        }
+    }
+
+    cout << "built tasks" << endl;
+    vector<ConcurrentIndexRange> ranges = rangeCalculator(tasks.size(), processor_count);
+
+    vector<thread> threads(processor_count);
+    vector<tuple<int, int, long, long>> resultSet = {}; // clusterId, bestCentroidId, bestCentroidCost, totalCost
+
+    cout << " about to optimisse selection " << endl; 
+    for (int i = 0; i < ranges.size(); i++)
+    {
+        // void optimiseSelectionCostKernel(cv::Mat &data, ConcurrentIndexRange range, vector<tuple<int, int, vector<int>>> tasks, vector<tuple<int, int, long, long>> &resultSet)
+
+        threads[i] = thread{optimiseSelectionCostKernel, ref(data), ranges[i], tasks, ref(resultSet)};
+    }
+    cout << "defined threads agan...." << endl;
+    for (auto &th : threads)
+    {
+        th.join();
+    }
+
+    cout << " got some results " << endl; 
+
+    map<int, tuple<int, long, long>> resultSetAgg = {}; // clusterId => bestCentroidId, bestCentroidCost, totalCost
+    for (int i = 0; i < resultSet.size(); i++)
+    {
+        auto clusterId = get<0>(resultSet[i]);
+        auto bestCentroidId = get<1>(resultSet[i]);
+        auto bestCentroidCost = get<2>(resultSet[i]);
+        auto totalCost = get<3>(resultSet[i]);
+        if (resultSetAgg.count(clusterId) > 0)
+        {
+            int bestGlobalCentroidCost = get<1>(resultSetAgg[clusterId]);
+            int bestGlobalCentroidIndex = get<0>(resultSetAgg[clusterId]);
+            long newGlobalTotal = get<2>(resultSetAgg[clusterId]) + totalCost;
+
+            if (bestCentroidCost < bestGlobalCentroidCost)
+            {
+                bestGlobalCentroidCost = bestCentroidCost;
+                bestGlobalCentroidIndex = bestCentroidId;
+            }
+            resultSetAgg[clusterId] = make_tuple(bestGlobalCentroidIndex, bestGlobalCentroidCost, newGlobalTotal);
+        }
+        else
+        {
+            resultSetAgg[clusterId] = make_tuple(bestCentroidId, bestCentroidCost, totalCost);
+        }
+    }
+
+    for (map<int, tuple<int, long, long>>::iterator it = resultSetAgg.begin(); it != resultSetAgg.end(); ++it) {
+
+    }
+
+    //         if (results.count(clusterId) > 0)
 }
 
 int main(int argc, char **argv)
@@ -359,12 +557,15 @@ int main(int argc, char **argv)
     vector<int> centroids = seedClusters(m, 4);
     for (auto i = centroids.begin(); i != centroids.end(); ++i)
         std::cout << *i << ' ';
-    
+
     vector<int> indices;
-    for (int i = 0; i < m.rows; i++) {
+    for (int i = 0; i < m.rows; i++)
+    {
         indices.push_back(i);
     }
 
     cout << "optimise " << endl;
     map<int, vector<int>> clusterMembership = optimiseClusterMembership(indices, m, centroids);
+    cout << "selllect" << endl;
+    optimiseCentroidSelectionAndComputeCost(m, clusterMembership);
 }
