@@ -395,7 +395,7 @@ void erase_v4(std::vector<int> &vec, int value)
 
 std::mutex optimiseSelectionCostMtx; // mutex for critical section
 
-void optimiseSelectionCostKernel(cv::Mat &data, ConcurrentIndexRange range, vector<tuple<int, int, vector<int>>> tasks, vector<tuple<int, int, long, long>> &resultSet)
+void optimiseSelectionCostKernel(cv::Mat &data, ConcurrentIndexRange range, vector<vector<int>> &clusters, vector<tuple<int, int>> tasks, vector<tuple<int, int, long, long>> &resultSet)
 {
     // map<clusterId> => bestCenteroidId, bestCentroidCost, totalCost
     map<int, tuple<int, long, long>> results = {};
@@ -404,7 +404,7 @@ void optimiseSelectionCostKernel(cv::Mat &data, ConcurrentIndexRange range, vect
         auto task = tasks[i];
         int clusterId = get<0>(task);
         int pointId = get<1>(task);
-        vector<int> cluster = get<2>(task);
+        vector<int> cluster = clusters[clusterId]; // get<2>(task);
         // get data index of point id
         const int pointGlobalIndex = cluster[pointId];
         // remove pointId from cluster
@@ -446,6 +446,8 @@ void optimiseSelectionCostKernel(cv::Mat &data, ConcurrentIndexRange range, vect
             results[clusterId] = make_tuple(pointId, cost, cost);
         }
 
+        cout << " done task " << i << endl;
+
         // mymap.count(c)>0
     }
 
@@ -474,7 +476,7 @@ void optimiseCentroidSelectionAndComputeCost(cv::Mat &data, map<int, vector<int>
     cout << " got centroid keys " << endl;
     // jobs = [];
     // <centroidIdentifier{0,1,2,4},dataIdentifier{0,1,....1000000}
-    vector<tuple<int, int, vector<int>>> tasks = {};
+    vector<tuple<int, int>> tasks = {};
     for (int i = 0; i < centroids.size(); i++)
     {
         int centroid = centroids[i];
@@ -487,7 +489,7 @@ void optimiseCentroidSelectionAndComputeCost(cv::Mat &data, map<int, vector<int>
         {
             cout << " pushing tasks " << endl;
             // TODO FIXE ME, rather than pushing the cluster, push the cluster index and parse the reference to the kernel
-            tasks.push_back(make_tuple(i, j, cluster)); // j is the data point index
+            tasks.push_back(make_tuple(i, j)); // j is the data point index
             // for each task we need to know:
             // cluster id, data point id, cluster indicies pointer
         }
@@ -504,7 +506,7 @@ void optimiseCentroidSelectionAndComputeCost(cv::Mat &data, map<int, vector<int>
     {
         // void optimiseSelectionCostKernel(cv::Mat &data, ConcurrentIndexRange range, vector<tuple<int, int, vector<int>>> tasks, vector<tuple<int, int, long, long>> &resultSet)
 
-        threads[i] = thread{optimiseSelectionCostKernel, ref(data), ranges[i], tasks, ref(resultSet)};
+        threads[i] = thread{optimiseSelectionCostKernel, ref(data), ranges[i], ref(clusters), tasks, ref(resultSet)};
     }
     cout << "defined threads agan...." << endl;
     for (auto &th : threads)
