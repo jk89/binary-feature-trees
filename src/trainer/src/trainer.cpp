@@ -446,7 +446,9 @@ void optimiseSelectionCostKernel(cv::Mat &data, ConcurrentIndexRange range, vect
             results[clusterId] = make_tuple(pointId, cost, cost);
         }
 
-        cout << " done task " << i << endl;
+        cout << " done task " << ((float(i) - float(range.start)) * 100) / (range.end - range.start) << endl;
+
+        // cout << " done task " << i << endl;
 
         // mymap.count(c)>0
     }
@@ -556,7 +558,7 @@ int main(int argc, char **argv)
     cout << "details of m rows" << m.rows << " cols " << m.cols << " tyoe " << m.type() << endl;
     cout << "first row: " << cv::format(m.row(0), cv::Formatter::FMT_PYTHON) << endl;
     cout << "second row: " << cv::format(m.row(1), cv::Formatter::FMT_PYTHON) << endl;
-    vector<int> centroids = seedClusters(m, 4);
+    vector<int> centroids = seedClusters(m, 8);
     for (auto i = centroids.begin(); i != centroids.end(); ++i)
         std::cout << *i << ' ';
 
