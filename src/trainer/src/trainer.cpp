@@ -224,9 +224,10 @@ vector<int> seedClusters(cv::Mat data, int k) // data, k, metric
 // dep'd as arg cv::Mat currentCentroidData,
 std::mutex clusterMtx;           // mutex for critical section
 
-void clusterKernel(vector<int> &dataIndices, cv::Mat &data, ConcurrentIndexRange &range, vector<int> &centroidIndices, map<int, bool> &isCentroid, vector<CentroidDataIndexPair> &threadResults) // map<int, vector<int>> &clusterMembership
+void clusterKernel(vector<int> &dataIndices, cv::Mat &data, ConcurrentIndexRange &range, vector<int> &centroidIndices, map<int, bool> &isCentroid, vector<pair<int, int>> &threadResults) // map<int, vector<int>> &clusterMembership
 {
-    /*vector<CentroidDataIndexPair> localThreadResults;
+    // cout << "ok" << endl;
+    vector<pair<int,int>> localThreadResults;
 
     // iterate data within range
     for (int i = range.start; i <= range.end; i++)
@@ -257,16 +258,16 @@ void clusterKernel(vector<int> &dataIndices, cv::Mat &data, ConcurrentIndexRange
         }
 
         // clusterMembership[nearestCentroidIndex].push_back(dataIndex);
-        CentroidDataIndexPair indexPair = {nearestCentroidIndex, dataIndex};
-        localThreadResults.push_back(indexPair);
-    }*/
+        // cout << "di " << dataIndex << "ci " << nearestCentroidIndex << endl;
+        localThreadResults.push_back(make_pair(nearestCentroidIndex, dataIndex));
+    }
     // clusterMtx
-    // clusterMtx.lock();
-    // threadResults.insert(localThreadResults.end(), localThreadResults.begin(), localThreadResults.end());
-    // clusterMtx.unlock();
+    clusterMtx.lock();
+    threadResults.insert(threadResults.end(), localThreadResults.begin(), localThreadResults.end());
+    clusterMtx.unlock();
 }
 
-void optimiseClusterMembership(vector<int> &dataIndices, cv::Mat &data, int k, vector<int> &centroidSeedIndices)
+map<int, vector<int>> optimiseClusterMembership(vector<int> &dataIndices, cv::Mat &data, vector<int> &centroidSeedIndices)
 { // data, n=4, metric=hammingVector, intitalClusterIndices=None
     // centroidData
     // processor_count
@@ -320,13 +321,14 @@ void optimiseClusterMembership(vector<int> &dataIndices, cv::Mat &data, int k, v
     // const cv::Mat centroidData = data.row(centroidIndex);
 
     vector<thread> threads(threadPool);
-    vector<CentroidDataIndexPair> threadResults;
+    vector<pair<int, int>> threadResults;
 
     for (int i = 0; i < threadPool; i++)
     {
         // void clusterKernel(vector<int> &dataIndices, cv::Mat &data, ConcurrentIndexRange &range, vector<int> &centroidIndices, map<int, bool> &isCentroid, map<int, vector<int>> &clusterMembership)
         // vector<CentroidDataIndexPair> &threadResults
-        threads[i] = thread(clusterKernel, ref(dataIndices), ref(data), ref(ranges[i]), ref(centroidSeedIndices), ref(isCentroid), ref(threadResults)); // thread(doSomething, i + 1);
+        // 
+        threads[i] = (thread{clusterKernel, ref(dataIndices), ref(data), ref(ranges[i]), ref(centroidSeedIndices), ref(isCentroid), ref(threadResults)}); // thread(doSomething, i + 1);
     }
 
     for (auto &th : threads)
@@ -334,7 +336,17 @@ void optimiseClusterMembership(vector<int> &dataIndices, cv::Mat &data, int k, v
         th.join();
     }
 
+
+    cout << " RESULT SET SIZE " << threadResults.size() << endl;
+
+
+    for (int i = 0; i < threadResults.size(); i++) {
+        clusterMembership[threadResults[i].first].push_back(threadResults[i].second);
+        // cout << " pair results, data index: " << threadResults[i].second << " centroid index " << threadResults[i].first << endl;
+    }
     // m = cv::Mat(dedupVectorData.size(), 32, CV_8U)
+    // map<int, vector<int>> clusterMembership = {};
+    return clusterMembership;
 }
 
 int main(int argc, char **argv)
@@ -344,14 +356,15 @@ int main(int argc, char **argv)
     cout << "details of m rows" << m.rows << " cols " << m.cols << " tyoe " << m.type() << endl;
     cout << "first row: " << cv::format(m.row(0), cv::Formatter::FMT_PYTHON) << endl;
     cout << "second row: " << cv::format(m.row(1), cv::Formatter::FMT_PYTHON) << endl;
-    vector<int> centroids = seedClusters(m, 8);
+    vector<int> centroids = seedClusters(m, 4);
     for (auto i = centroids.begin(); i != centroids.end(); ++i)
         std::cout << *i << ' ';
     
     vector<int> indices;
     for (int i = 0; i < m.rows; i++) {
-        indices[i] = i;
+        indices.push_back(i);
     }
 
-    optimiseClusterMembership(indices, m, 8, centroids);
+    cout << "optimise " << endl;
+    map<int, vector<int>> clusterMembership = optimiseClusterMembership(indices, m, centroids);
 }
