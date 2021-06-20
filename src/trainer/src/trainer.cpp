@@ -356,6 +356,8 @@ map<int, vector<int>> optimiseClusterMembership(vector<int> &dataIndices, cv::Ma
 
     cout << " initing the pools " << endl;
 
+    // FIX ME POSSIBLE BUG HERE
+
     for (int i = 0; i < threadPool; i++)
     {
         // void clusterKernel(vector<int> &dataIndices, cv::Mat &data, ConcurrentIndexRange &range, vector<int> &centroidIndices, map<int, bool> &isCentroid, map<int, vector<int>> &clusterMembership)
@@ -371,10 +373,11 @@ map<int, vector<int>> optimiseClusterMembership(vector<int> &dataIndices, cv::Ma
 
     cout << " RESULT SET SIZE " << threadResults.size() << endl;
 
+    // FIXME POSSIBLE BUG HERE
     for (int i = 0; i < threadResults.size(); i++)
     {
+        cout << " pair results, data index: " << threadResults[i].second << " centroid index " << threadResults[i].first << endl;
         clusterMembership[threadResults[i].first].push_back(threadResults[i].second);
-        // cout << " pair results, data index: " << threadResults[i].second << " centroid index " << threadResults[i].first << endl;
     }
     cout << endl;
     // m = cv::Mat(dedupVectorData.size(), 32, CV_8U)
@@ -728,7 +731,7 @@ int main(int argc, char **argv)
         iteration++;
     }
 
-    cout <<  "ALL DONE. Best membership:" << endl;
+    cout << "ALL DONE. Best membership:" << endl;
 
     clusterMembershipPrinter(bestMembership);
 
