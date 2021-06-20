@@ -334,6 +334,7 @@ map<int, vector<int>> optimiseClusterMembership(vector<int> &dataIndices, cv::Ma
     vector<ConcurrentIndexRange> ranges = rangeCalculator(dataRowCount, threadPool);
 
     // centroidMembership
+    cout << " about to init clusterMember ship is centroid store" << endl;
 
     // for each centroid
     for (int c = 0; c < centroidSeedIndices.size(); c++)
@@ -352,6 +353,8 @@ map<int, vector<int>> optimiseClusterMembership(vector<int> &dataIndices, cv::Ma
 
     vector<thread> threads(threadPool);
     vector<pair<int, int>> threadResults;
+
+    cout << " initing the pools " << endl;
 
     for (int i = 0; i < threadPool; i++)
     {
@@ -373,6 +376,7 @@ map<int, vector<int>> optimiseClusterMembership(vector<int> &dataIndices, cv::Ma
         clusterMembership[threadResults[i].first].push_back(threadResults[i].second);
         // cout << " pair results, data index: " << threadResults[i].second << " centroid index " << threadResults[i].first << endl;
     }
+    cout << endl;
     // m = cv::Mat(dedupVectorData.size(), 32, CV_8U)
     // map<int, vector<int>> clusterMembership = {};
     return clusterMembership;
@@ -679,7 +683,9 @@ int main(int argc, char **argv)
     vector<int> centroids = seedClusters(m, 8);
     cout << "Centroids: " << endl;
     for (auto i = centroids.begin(); i != centroids.end(); ++i)
-        std::cout << *i << ', ';
+    {
+        std::cout << *i << ", ";
+    }
     cout << endl;
 
     vector<int> indices;
@@ -694,23 +700,37 @@ int main(int argc, char **argv)
     bool escape = false;
 
     int iteration = 0;
-    while (escape == false) {
+    while (escape == false)
+    {
         auto optimalSelectionResults = optimiseCentroidSelectionAndComputeCost(m, bestMembership);
         auto cost = optimalSelectionResults.first;
         auto clusterMembership = optimalSelectionResults.second;
         centroids = getClusterKeys(clusterMembership);
+        cout << "centroids2:" << centroids.size() << endl;
+        for (auto i = centroids.begin(); i != centroids.end(); ++i)
+        {
+            cout << *i << ", ";
+        }
+        cout << endl;
+        cout << " about to opt again" << endl;
         clusterMembership = optimiseClusterMembership(indices, m, centroids);
-        if (cost < bestCost) {
+        if (cost < bestCost)
+        {
             cout << "Optimsiation improving (currentCost, oldCost)" << cost << " , " << bestCost << endl;
             clusterMembershipPrinter(clusterMembership);
             bestCost = cost;
             bestMembership = clusterMembership;
         }
-        else {
+        else
+        {
             escape = true;
         }
         iteration++;
     }
+
+    cout <<  "ALL DONE. Best membership:" << endl;
+
+    clusterMembershipPrinter(bestMembership);
 
     /*cout << "optimise------------------------> " << endl;
     map<int, vector<int>> clusterMembership = optimiseClusterMembership(indices, m, centroids);
