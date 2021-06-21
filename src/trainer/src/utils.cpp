@@ -157,6 +157,13 @@ vector<int> getClusterKeys(map<int, vector<int>> m)
     return keys;
 }
 
+void centroidPrinter(vector<int> centroids)
+{
+    for (auto i = centroids.begin(); i != centroids.end(); ++i)
+    {
+        std::cout << *i << ", ";
+    }
+}
 void clusterMembershipPrinter(map<int, vector<int>> clusterMembership)
 {
     cout << endl;

@@ -45,4 +45,7 @@ int main(int argc, char **argv)
 
     cout << "ALL DONE. Best membership:" << endl;
     clusterMembershipPrinter(kmedoidsClusterMembership);
+
+    cout << "Best centroids:" << endl;
+    centroidPrinter(getClusterKeys(kmedoidsClusterMembership));
 }

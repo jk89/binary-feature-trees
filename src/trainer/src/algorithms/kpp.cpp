@@ -34,14 +34,19 @@ int seedKernel(cv::Mat data, int currentCentroidIndex, vector<int> centroids, in
     return maxIndex; // return the best centroid
 }
 
-vector<int> seedClusters(cv::Mat data, int k) // data, k, metric
+vector<int> seedClusters(cv::Mat data, int _k, vector<int> seeds) // data, k, metric
 {
     // largest index
     const int dataLength = data.rows;
-    vector<int> centroids = {};
+    vector<int> centroids = seeds;
+
+    int k = _k - seeds.size();
 
     // add random first centroid index
-    centroids.push_back(random(0, dataLength - 1));
+    if (seeds.size() == 0)
+    {
+        centroids.push_back(random(0, dataLength - 1));
+    }
 
     // for the rest of k
     for (int i = 0; i < k - 1; i++)

@@ -7,7 +7,7 @@ map<int, vector<int>> kmedoids(cv::Mat &data, vector<int> &indices, int k, int p
     cout << "first row: " << cv::format(data.row(0), cv::Formatter::FMT_PYTHON) << endl;
     cout << "second row: " << cv::format(data.row(1), cv::Formatter::FMT_PYTHON) << endl;
     cout << "Seeding clusters:" << endl;
-    vector<int> centroids = seedClusters(data, k);
+    vector<int> centroids = seedClusters(data, k, {0});
     cout << "Centroids: " << endl;
     for (auto i = centroids.begin(); i != centroids.end(); ++i)
     {
