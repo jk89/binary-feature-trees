@@ -20,77 +20,8 @@ using namespace std::chrono;
 
 namespace fs = boost::filesystem;
 
-const char *filename = "./data/ORBvoc.txt";
+char *filename = "./data/ORBvoc.txt";
 const auto processor_count = std::thread::hardware_concurrency();
-
-cv::Mat load_data()
-{
-    cv::Mat m;
-    std::ifstream file(filename);
-    // file.open(filename, ios::in|ios::out|ios::binary);
-    get_all("./data");
-    if (file.is_open())
-    {
-        std::string line;
-        int idx = 0;
-        vector<array<uint8_t, 32>> data = {};
-        // for each line in file
-        while (std::getline(file, line))
-        {
-            if (idx < 1)
-            {
-                idx++;
-                continue;
-            };
-            std::string cline;
-            cline = line.c_str();
-            vector<std::string> strs;
-            boost::split(strs, line, boost::is_any_of(" ")); // space delimeter
-            strs.erase(strs.begin());
-            // strip out non-orb data leaving just the orb features
-            strs.erase(strs.begin());
-            strs.erase(strs.begin() + 34);
-            strs.erase(strs.begin() + 34);
-            // decode feature
-            array<uint8_t, 32> feature = {};
-            int featureIdx = 0;
-            for (auto it = strs.begin(); it != strs.end(); ++it)
-            {
-                std::string cfeature = *it;
-                int icfeature = std::stoi(cfeature);
-                uint8_t ui8feature = icfeature;
-                feature[featureIdx] = ui8feature;
-                featureIdx++;
-            }
-            // push feature to data vec
-            data.push_back(feature);
-            idx++;
-        }
-        file.close();
-        cout << " Loaded file into vector " << endl;
-
-        // create set for deduplication
-        std::set<array<uint8_t, 32>, compareFeatureVecs> dedupedSetData;
-        for (int i = 0; i < data.size(); ++i)
-        {
-            dedupedSetData.insert(data[i]);
-        }
-        cout << " Deduplicated features " << endl;
-
-        // convert back to vector now its all unique
-        vector<array<uint8_t, 32>> dedupVectorData = {}; // uint8_t[32]
-        dedupVectorData.assign(dedupedSetData.begin(), dedupedSetData.end());
-
-        vector<array<uint8_t, 32>> dedupVectorDataSubSample = sample(dedupVectorData, 10000); //  dedupVectorData; // 
-
-        cout << " Converted unique feature set into vector " << endl;
-
-        m = cv::Mat(dedupVectorDataSubSample.size(), 32, CV_8U); // row col
-        memcpy(m.data, dedupVectorDataSubSample.data(), dedupVectorDataSubSample.size() * sizeof(array<uint8_t, 32>));
-        cout << " Loaded vector into matrix " << endl;
-    }
-    return m;
-}
 
 int seedKernel(cv::Mat data, int currentCentroidIndex, vector<int> centroids, int k) // data, dataIdValue, centroids, k, metric
 {
@@ -464,7 +395,7 @@ pair<long long, map<int, vector<int>>> optimiseCentroidSelectionAndComputeCost(c
 int main(int argc, char **argv)
 {
     cv::Mat m;
-    m = load_data();
+    m = load_data(filename);
     cout << "details of m rows" << m.rows << " cols " << m.cols << " tyoe " << m.type() << endl;
     cout << "first row: " << cv::format(m.row(0), cv::Formatter::FMT_PYTHON) << endl;
     cout << "second row: " << cv::format(m.row(1), cv::Formatter::FMT_PYTHON) << endl;
