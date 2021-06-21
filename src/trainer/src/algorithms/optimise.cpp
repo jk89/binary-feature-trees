@@ -24,7 +24,7 @@ void optimiseSelectionCostKernel(cv::Mat &data, vector<int> &threadTasks, vector
         int clusterId = get<0>(task);
         int pointId = get<1>(task);
 
-        vector<int> cluster = clusters[clusterId]; // get<2>(task);
+        vector<int> cluster(clusters[clusterId]); // get<2>(task);
 
         // get data index of point id
         const int pointGlobalIndex = cluster[pointId];
@@ -57,7 +57,8 @@ void optimiseSelectionCostKernel(cv::Mat &data, vector<int> &threadTasks, vector
 
             if (cost < bestCentroidCost)
             {
-                cout << "updating best" << clusterId << " id:" << pointGlobalIndex << " cost:" << cost << endl;
+                // cout << "updating best" << clusterId << " id:" << pointGlobalIndex << " cost:" << cost << endl;
+
                 bestCentroidCost = cost;
                 bestCentroidIndex = pointId;
             }
@@ -67,7 +68,7 @@ void optimiseSelectionCostKernel(cv::Mat &data, vector<int> &threadTasks, vector
         }
         else
         {
-            cout << "updating best" << clusterId << " id:" << pointGlobalIndex << " cost:" << cost << endl;
+            // cout << "updating best" << clusterId << " id:" << pointGlobalIndex << " cost:" << cost << endl;
             results[clusterId] = make_tuple(pointId, cost, cost);
             clusterExists[clusterId] = true;
         }
@@ -76,8 +77,8 @@ void optimiseSelectionCostKernel(cv::Mat &data, vector<int> &threadTasks, vector
         {
             auto t2 = high_resolution_clock::now();
             auto ms_int = duration_cast<milliseconds>(t2 - t1);
-            // cout << "thread " << this_thread::get_id() << " | local idx" << j << " | global idx " << *it << " | pc " << ((float(j)) * 100) / (taskMax) << endl;
-            // std::cout << ms_int.count() << "ms\n";
+            cout << "thread " << this_thread::get_id() << " | local idx" << j << " | global idx " << *it << " | pc " << ((float(j)) * 100) / (taskMax) << endl;
+            std::cout << ms_int.count() << "ms\n";
         }
 
         // cout << " done task " << i << endl;
@@ -108,28 +109,6 @@ void optimiseSelectionCostKernel(cv::Mat &data, vector<int> &threadTasks, vector
     optimiseSelectionCostMtx.unlock();
 }
 
-/*
-
-centroidid: 1265 cost: 117970
-centroidid: 1260 cost: 118363
-centroidid: 1613 cost: 158021
-centroidid: 1867 cost: 171019
-centroidid: 219 cost: 133426
-centroidid: 955 cost: 110091
-centroidid: 807 cost: 80030
-centroidid: 453 cost: 46017
-
-centroidid: 264 cost: 117970
-centroidid: 1260 cost: 118363
-centroidid: 1613 cost: 158021
-centroidid: 458 cost: 171019
-centroidid: 965 cost: 133426
-centroidid: 40 cost: 110091
-centroidid: 807 cost: 80030
-centroidid: 453 cost: 46017
-
-*/
-
 pair<long long, map<int, vector<int>>> optimiseCentroidSelectionAndComputeCost(cv::Mat &data, map<int, vector<int>> &clusterMembership, int processor_count)
 {
     vector<int> centroids = getClusterKeys(clusterMembership);
@@ -141,7 +120,7 @@ pair<long long, map<int, vector<int>>> optimiseCentroidSelectionAndComputeCost(c
     for (int i = 0; i < centroids.size(); i++)
     {
         int centroid = centroids[i];
-        vector<int> cluster = clusterMembership[centroid];
+        vector<int> cluster(clusterMembership[centroid]);
         cluster.push_back(centroid);
         clusters.push_back(cluster);
         // sort(cluster.begin(), cluster.end());
@@ -217,11 +196,11 @@ pair<long long, map<int, vector<int>>> optimiseCentroidSelectionAndComputeCost(c
         int bestCentroid = get<0>(clusterResults);
         // int oldCentroidId = centroids[i];
         auto fullCluster = clusters[i];
+        const int bestCentroidGlobal = fullCluster[bestCentroid];
         // erase best centroid
         fullCluster.erase(fullCluster.begin() + bestCentroid);
-        newClusterMembership[bestCentroid] = fullCluster;
-        cout << "centroidid: " << bestCentroid << " cost: " << get<1>(clusterResults) << endl;
-
+        newClusterMembership[bestCentroidGlobal] = fullCluster;
+        cout << "bestCentroidGlobalId: " << bestCentroidGlobal << " cost: " << get<1>(clusterResults) << endl;
     }
 
     return make_pair(totalCost, newClusterMembership);

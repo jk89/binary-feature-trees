@@ -41,14 +41,14 @@ map<int, vector<int>> distributeTasks(vector<tuple<int, int>> &tasks, int partit
         }
     }
 
-    for (int i = 0; i < partitions; i++) {
+    /*for (int i = 0; i < partitions; i++) {
         cout << "partition " << i << endl;
         auto taskIndicies = taskDistibution[i];
         for (int j = 0; j < taskIndicies.size(); j++) {
             cout << taskIndicies[j] << ", ";
         }
         cout << endl;
-    }
+    }*/
 
     return taskDistibution;
 }
