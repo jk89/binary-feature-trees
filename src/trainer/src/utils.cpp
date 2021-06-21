@@ -271,3 +271,13 @@ cv::Mat readFeaturesFromFile(char *filename)
     fs.release();
     return data;
 }
+
+vector<int> getRange(int range)
+{
+    vector<int> indices;
+    for (int i = 0; i < range; i++)
+    {
+        indices.push_back(i);
+    }
+    return indices;
+}

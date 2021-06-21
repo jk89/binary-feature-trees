@@ -16,6 +16,7 @@
 #include "algorithms/cluster.cpp"
 #include "algorithms/optimise.cpp"
 #include "algorithms/kmedoids.cpp"
+#include "algorithms/voctree.cpp"
 
 // using namespace cv;
 using namespace std;
