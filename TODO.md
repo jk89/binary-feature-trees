@@ -7,7 +7,7 @@
      "partitions": 8,
      "centroids": [0, 1, 2, 3];
      "membership": {
-         0: []
+         0: [{recursive}]
          1: []
          2: []
          3: []
