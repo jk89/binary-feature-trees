@@ -143,7 +143,7 @@ cv::Mat load_data()
         vector<array<uint8_t, 32>> dedupVectorData = {}; // uint8_t[32]
         dedupVectorData.assign(dedupedSetData.begin(), dedupedSetData.end());
 
-        vector<array<uint8_t, 32>> dedupVectorDataSubSample = sample(dedupVectorData, 20000); // dedupVectorData
+        vector<array<uint8_t, 32>> dedupVectorDataSubSample = dedupVectorData; // sample(dedupVectorData, 20000); // 
 
         cout << " Converted unique feature set into vector " << endl;
 
@@ -376,7 +376,7 @@ map<int, vector<int>> optimiseClusterMembership(vector<int> &dataIndices, cv::Ma
     // FIXME POSSIBLE BUG HERE
     for (int i = 0; i < threadResults.size(); i++)
     {
-        cout << " pair results, data index: " << threadResults[i].second << " centroid index " << threadResults[i].first << endl;
+        // cout << " pair results, data index: " << threadResults[i].second << " centroid index " << threadResults[i].first << endl;
         clusterMembership[threadResults[i].first].push_back(threadResults[i].second);
     }
     cout << endl;
@@ -583,7 +583,7 @@ pair<long long, map<int, vector<int>>> optimiseCentroidSelectionAndComputeCost(c
     vector<thread> threads(processor_count);
     vector<tuple<int, int, long long, long long>> resultSet = {}; // clusterId, bestCentroidId, bestCentroidCost, totalCost
 
-    cout << " about to optimisse selection " << endl;
+    cout << " about to optimisse selection. tasks:" << tasks.size() << endl;
 
     int ix = 0;
     for (map<int, vector<int>>::iterator it = distributedTasks.begin(); it != distributedTasks.end(); ++it)
