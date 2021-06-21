@@ -237,7 +237,7 @@ cv::Mat load_data(char *filename)
         vector<array<uint8_t, 32>> dedupVectorData = {}; // uint8_t[32]
         dedupVectorData.assign(dedupedSetData.begin(), dedupedSetData.end());
 
-        vector<array<uint8_t, 32>> dedupVectorDataSubSample = random_sample(dedupVectorData, 10000); //  dedupVectorData; //
+        vector<array<uint8_t, 32>> dedupVectorDataSubSample = random_sample(dedupVectorData, 30000); //  dedupVectorData; //
 
         cout << " Converted unique feature set into vector " << endl;
 
