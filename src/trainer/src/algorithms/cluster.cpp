@@ -1,5 +1,7 @@
 #include <opencv2/opencv.hpp>
 #include <opencv2/core/mat.hpp>
+#include <thread>
+
 using namespace std;
 
 std::mutex clusterMtx; // mutex for critical section
@@ -12,7 +14,7 @@ void clusterKernel(vector<int> &dataIndices, cv::Mat &data, ConcurrentIndexRange
     // iterate data within range
     for (int i = range.start; i <= range.end; i++)
     {
-        const bool isDataPointACentroid = isCentroid[i];
+        bool isDataPointACentroid = isCentroid[i];
         if (isDataPointACentroid == true)
             continue; // skip calculating optimal membership for centroids as they are not members of any cluster
 
@@ -21,7 +23,7 @@ void clusterKernel(vector<int> &dataIndices, cv::Mat &data, ConcurrentIndexRange
         const cv::Mat currentFeatureData = data.row(dataIndex);
 
         int nearestCentroidIndex = -1;
-        int nearestDistance = INT_MAX;
+        long long nearestDistance = LLONG_MAX;
 
         // find the closest centroid, if the current data point index means it is a centroid then ?
         for (int c = 0; c < centroidIndices.size(); c++)
@@ -30,7 +32,7 @@ void clusterKernel(vector<int> &dataIndices, cv::Mat &data, ConcurrentIndexRange
             cv::Mat currentCentroidData = data.row(centroidIndex);
 
             // calculate pairwise hamming distance
-            const int distance = hammingDistance(currentCentroidData, currentFeatureData);
+            long long distance = hammingDistance(currentCentroidData, currentFeatureData);
 
             if (distance < nearestDistance)
             {
@@ -48,7 +50,6 @@ void clusterKernel(vector<int> &dataIndices, cv::Mat &data, ConcurrentIndexRange
     threadResults.insert(threadResults.end(), localThreadResults.begin(), localThreadResults.end());
     clusterMtx.unlock();
 }
-
 
 map<int, vector<int>> optimiseClusterMembership(vector<int> &dataIndices, cv::Mat &data, vector<int> &centroidSeedIndices, int processor_count)
 { // data, n=4, metric=hammingVector, intitalClusterIndices=None
@@ -92,13 +93,28 @@ map<int, vector<int>> optimiseClusterMembership(vector<int> &dataIndices, cv::Ma
     {
         // void clusterKernel(vector<int> &dataIndices, cv::Mat &data, ConcurrentIndexRange &range, vector<int> &centroidIndices, map<int, bool> &isCentroid, map<int, vector<int>> &clusterMembership)
         // vector<CentroidDataIndexPair> &threadResults
-        //
+        // ranges[i]
+        /*
+
+        */
+        cout << "ranges i start" << ranges[i].start << endl;
+        cout << "ranges i end" << ranges[i].end << endl;
+        for (int c = 0; c < centroidSeedIndices.size(); c++) {
+            cout << " centroid " << centroidSeedIndices[c] << endl;
+        }
+
         threads[i] = (thread{clusterKernel, ref(dataIndices), ref(data), ref(ranges[i]), ref(centroidSeedIndices), ref(isCentroid), ref(threadResults)}); // thread(doSomething, i + 1);
+        cout << "building thread " << i << " done" << endl;
     }
 
+    cout << " about to join " << endl;
+
+    int j = 0;
     for (auto &th : threads)
     {
         th.join();
+        cout << "joining thread " << j << endl;
+        j++;
     }
 
     cout << " RESULT SET SIZE " << threadResults.size() << endl;
@@ -110,9 +126,9 @@ map<int, vector<int>> optimiseClusterMembership(vector<int> &dataIndices, cv::Ma
         clusterMembership[threadResults[i].first].push_back(threadResults[i].second);
     }
     cout << endl;
+
+    clusterMembershipPrinter(clusterMembership);
     // m = cv::Mat(dedupVectorData.size(), 32, CV_8U)
     // map<int, vector<int>> clusterMembership = {};
     return clusterMembership;
 }
-
-

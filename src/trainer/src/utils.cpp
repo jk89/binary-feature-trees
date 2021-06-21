@@ -8,7 +8,6 @@ using namespace boost::filesystem;
 namespace fs = boost::filesystem;
 using namespace std;
 
-
 /*
 
 #define ConcurrentIndexRange
@@ -42,9 +41,17 @@ map<int, vector<int>> distributeTasks(vector<tuple<int, int>> &tasks, int partit
         }
     }
 
+    for (int i = 0; i < partitions; i++) {
+        cout << "partition " << i << endl;
+        auto taskIndicies = taskDistibution[i];
+        for (int j = 0; j < taskIndicies.size(); j++) {
+            cout << taskIndicies[j] << ", ";
+        }
+        cout << endl;
+    }
+
     return taskDistibution;
 }
-
 
 /**
  * \brief   Return the filenames of all files that have the specified extension
@@ -68,7 +75,7 @@ std::vector<fs::path> get_all(fs::path const &root) // , std::string const & ext
     return paths;
 }
 
-vector<array<uint8_t, 32>> sample(vector<array<uint8_t, 32>> input, int size)
+vector<array<uint8_t, 32>> random_sample(vector<array<uint8_t, 32>> input, int size)
 {
     size_t maxSize = input.size();
     vector<array<uint8_t, 32>> output(size);
@@ -80,6 +87,16 @@ vector<array<uint8_t, 32>> sample(vector<array<uint8_t, 32>> input, int size)
     return output;
 }
 
+vector<array<uint8_t, 32>> sample(vector<array<uint8_t, 32>> input, int size)
+{
+    size_t maxSize = input.size();
+    vector<array<uint8_t, 32>> output(size);
+    for (int i = 0; i < size; i++)
+    {
+        output[i] = input[i];
+    }
+    return output;
+}
 
 int random(int min, int max) //range : [min, max]
 {
@@ -97,9 +114,6 @@ int hammingDistance(cv::Mat v1, cv::Mat v2)
     int distance = cv::norm(v1, v2, cv::NORM_HAMMING);
     return distance;
 }
-
-
-
 
 vector<ConcurrentIndexRange> rangeCalculator(int count, int partitions)
 {
@@ -165,8 +179,6 @@ void clusterMembershipPrinter(map<int, vector<int>> clusterMembership)
     cout << endl;
 }
 
-
-
 cv::Mat load_data(char *filename)
 {
     cv::Mat m;
@@ -225,7 +237,7 @@ cv::Mat load_data(char *filename)
         vector<array<uint8_t, 32>> dedupVectorData = {}; // uint8_t[32]
         dedupVectorData.assign(dedupedSetData.begin(), dedupedSetData.end());
 
-        vector<array<uint8_t, 32>> dedupVectorDataSubSample = sample(dedupVectorData, 10000); //  dedupVectorData; // 
+        vector<array<uint8_t, 32>> dedupVectorDataSubSample = random_sample(dedupVectorData, 10000); //  dedupVectorData; //
 
         cout << " Converted unique feature set into vector " << endl;
 
@@ -234,4 +246,21 @@ cv::Mat load_data(char *filename)
         cout << " Loaded vector into matrix " << endl;
     }
     return m;
+}
+
+// FileStorage
+void writeFeaturesToFile(char *filename, cv::Mat data)
+{
+    cv::FileStorage fs(filename, cv::FileStorage::WRITE);
+    fs << "data" << data;
+    fs.release();
+}
+
+cv::Mat readFeaturesFromFile(char *filename)
+{
+    cv::Mat data;
+    cv::FileStorage fs(filename, cv::FileStorage::READ);
+    fs["data"] >> data;
+    fs.release();
+    return data;
 }

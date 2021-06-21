@@ -2,7 +2,6 @@
 #include <opencv2/core/mat.hpp>
 using namespace std;
 
-
 std::mutex optimiseSelectionCostMtx; // mutex for critical section
 // map<int, vector<int>> map<int, vector<int>>
 //  ConcurrentIndexRange &range
@@ -29,6 +28,7 @@ void optimiseSelectionCostKernel(cv::Mat &data, vector<int> &threadTasks, vector
 
         // get data index of point id
         const int pointGlobalIndex = cluster[pointId];
+        // cout << "POOOOINT GLOCAL INDEX " << pointGlobalIndex << endl;
 
         // remove pointId from cluster
         cluster.erase(cluster.begin() + pointId);
@@ -57,6 +57,7 @@ void optimiseSelectionCostKernel(cv::Mat &data, vector<int> &threadTasks, vector
 
             if (cost < bestCentroidCost)
             {
+                cout << "updating best" << clusterId << " id:" << pointGlobalIndex << " cost:" << cost << endl;
                 bestCentroidCost = cost;
                 bestCentroidIndex = pointId;
             }
@@ -66,6 +67,7 @@ void optimiseSelectionCostKernel(cv::Mat &data, vector<int> &threadTasks, vector
         }
         else
         {
+            cout << "updating best" << clusterId << " id:" << pointGlobalIndex << " cost:" << cost << endl;
             results[clusterId] = make_tuple(pointId, cost, cost);
             clusterExists[clusterId] = true;
         }
@@ -74,8 +76,8 @@ void optimiseSelectionCostKernel(cv::Mat &data, vector<int> &threadTasks, vector
         {
             auto t2 = high_resolution_clock::now();
             auto ms_int = duration_cast<milliseconds>(t2 - t1);
-            cout << "thread " << this_thread::get_id() << " | local idx" << j << " | global idx " << *it << " | pc " << ((float(j)) * 100) / (taskMax) << endl;
-            std::cout << ms_int.count() << "ms\n";
+            // cout << "thread " << this_thread::get_id() << " | local idx" << j << " | global idx " << *it << " | pc " << ((float(j)) * 100) / (taskMax) << endl;
+            // std::cout << ms_int.count() << "ms\n";
         }
 
         // cout << " done task " << i << endl;
@@ -89,17 +91,44 @@ void optimiseSelectionCostKernel(cv::Mat &data, vector<int> &threadTasks, vector
     {
         // keys.push_back(it->first);
         auto key = it->first;
-        auto value = it->second;
+        auto value = results[it->first];
 
         localResultSet.push_back(make_tuple(key, get<0>(value), get<1>(value), get<2>(value)));
     }
 
     //
+
     optimiseSelectionCostMtx.lock();
+    /*for (auto x = localResultSet.begin(); x < localResultSet.end(); ++x)
+    {
+        auto it = *x;
+        cout << get<0>(it) << ", " << get<1>(it) << ", " << get<2>(it) << endl;
+    }*/
     resultSet.insert(resultSet.end(), localResultSet.begin(), localResultSet.end());
     optimiseSelectionCostMtx.unlock();
 }
 
+/*
+
+centroidid: 1265 cost: 117970
+centroidid: 1260 cost: 118363
+centroidid: 1613 cost: 158021
+centroidid: 1867 cost: 171019
+centroidid: 219 cost: 133426
+centroidid: 955 cost: 110091
+centroidid: 807 cost: 80030
+centroidid: 453 cost: 46017
+
+centroidid: 264 cost: 117970
+centroidid: 1260 cost: 118363
+centroidid: 1613 cost: 158021
+centroidid: 458 cost: 171019
+centroidid: 965 cost: 133426
+centroidid: 40 cost: 110091
+centroidid: 807 cost: 80030
+centroidid: 453 cost: 46017
+
+*/
 
 pair<long long, map<int, vector<int>>> optimiseCentroidSelectionAndComputeCost(cv::Mat &data, map<int, vector<int>> &clusterMembership, int processor_count)
 {
@@ -191,6 +220,8 @@ pair<long long, map<int, vector<int>>> optimiseCentroidSelectionAndComputeCost(c
         // erase best centroid
         fullCluster.erase(fullCluster.begin() + bestCentroid);
         newClusterMembership[bestCentroid] = fullCluster;
+        cout << "centroidid: " << bestCentroid << " cost: " << get<1>(clusterResults) << endl;
+
     }
 
     return make_pair(totalCost, newClusterMembership);
