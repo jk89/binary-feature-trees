@@ -36,6 +36,8 @@ int seedKernel(cv::Mat data, int currentCentroidIndex, vector<int> centroids, in
 
 vector<int> seedClusters(cv::Mat data, int _k, vector<int> seeds) // data, k, metric
 {
+    cout << "ROUTINE: seed" << endl;
+
     // largest index
     const int dataLength = data.rows;
     vector<int> centroids = seeds;

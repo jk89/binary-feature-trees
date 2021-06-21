@@ -7,6 +7,8 @@ std::mutex optimiseSelectionCostMtx; // mutex for critical section
 //  ConcurrentIndexRange &range
 void optimiseSelectionCostKernel(cv::Mat &data, vector<int> &threadTasks, vector<vector<int>> &clusters, vector<tuple<int, int>> &tasks, vector<tuple<int, int, long long, long long>> &resultSet)
 {
+    cout << "ROUTINE: optimise" << endl;
+
     using std::chrono::duration;
     using std::chrono::duration_cast;
     using std::chrono::high_resolution_clock;

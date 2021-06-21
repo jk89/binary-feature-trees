@@ -53,6 +53,7 @@ void clusterKernel(vector<int> &dataIndices, cv::Mat &data, ConcurrentIndexRange
 
 map<int, vector<int>> optimiseClusterMembership(vector<int> &dataIndices, cv::Mat &data, vector<int> &centroidSeedIndices, int processor_count)
 { // data, n=4, metric=hammingVector, intitalClusterIndices=None
+    cout << "ROUTINE: cluster" << endl; 
     // centroidData
     // processor_count
     // create centroidIndexMap
@@ -83,7 +84,7 @@ map<int, vector<int>> optimiseClusterMembership(vector<int> &dataIndices, cv::Ma
     // const cv::Mat centroidData = data.row(centroidIndex);
 
     vector<thread> threads(threadPool);
-    vector<pair<int, int>> threadResults;
+    vector<pair<int, int>> threadResults = {};
 
     cout << " initing the pools " << endl;
 
@@ -99,7 +100,8 @@ map<int, vector<int>> optimiseClusterMembership(vector<int> &dataIndices, cv::Ma
         */
         cout << "ranges i start" << ranges[i].start << endl;
         cout << "ranges i end" << ranges[i].end << endl;
-        for (int c = 0; c < centroidSeedIndices.size(); c++) {
+        for (int c = 0; c < centroidSeedIndices.size(); c++)
+        {
             cout << " centroid " << centroidSeedIndices[c] << endl;
         }
 
@@ -112,8 +114,8 @@ map<int, vector<int>> optimiseClusterMembership(vector<int> &dataIndices, cv::Ma
     int j = 0;
     for (auto &th : threads)
     {
-        th.join();
         cout << "joining thread " << j << endl;
+        th.join();
         j++;
     }
 
