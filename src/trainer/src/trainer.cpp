@@ -10,6 +10,8 @@
 #include <iterator>
 #include <algorithm>
 #include <chrono>
+#include "models.cpp"  
+#include "utils.cpp"
 
 // using namespace cv;
 using namespace std;
@@ -20,70 +22,6 @@ namespace fs = boost::filesystem;
 
 const char *filename = "./data/ORBvoc.txt";
 const auto processor_count = std::thread::hardware_concurrency();
-
-struct ConcurrentIndexRange
-{
-    int start;
-    int end;
-};
-
-struct CentroidDataIndexPair
-{
-    int centroidIndex;
-    int dataGlobalIndex;
-};
-struct compareFeatureVecs
-{
-    bool operator()(const array<uint8_t, 32> &a, const array<uint8_t, 32> &b) const
-    {
-        array<uint8_t, 32> distance = {};
-        for (int i = 0; i < 32; ++i)
-        {
-            distance[i] = a[i] - b[i];
-            distance[i] = b[i] - a[i];
-        }
-        int total = 0;
-        for (int i = 0; i < 32; ++i)
-        {
-            total += distance[i];
-        }
-        return total > 0;
-    }
-};
-
-/**
- * \brief   Return the filenames of all files that have the specified extension
- *          in the specified directory and all subdirectories.
- */
-std::vector<fs::path> get_all(fs::path const &root) // , std::string const & ext
-{
-    std::vector<fs::path> paths;
-    if (fs::exists(root) && fs::is_directory(root))
-    {
-        for (auto const &entry : fs::directory_iterator(root)) // recursive_directory_iterator
-        {
-            if (fs::is_regular_file(entry)) //  && entry.path().extension() == ext
-            {
-                cout << entry.path().filename() << endl;
-                paths.emplace_back(entry.path().filename());
-            };
-        }
-    }
-
-    return paths;
-}
-
-vector<array<uint8_t, 32>> sample(vector<array<uint8_t, 32>> input, int size)
-{
-    size_t maxSize = input.size();
-    vector<array<uint8_t, 32>> output(size);
-    for (int i = 0; i < size; i++)
-    {
-        int idx = (rand() % maxSize);
-        output[i] = input[idx];
-    }
-    return output;
-}
 
 cv::Mat load_data()
 {
@@ -143,7 +81,7 @@ cv::Mat load_data()
         vector<array<uint8_t, 32>> dedupVectorData = {}; // uint8_t[32]
         dedupVectorData.assign(dedupedSetData.begin(), dedupedSetData.end());
 
-        vector<array<uint8_t, 32>> dedupVectorDataSubSample = dedupVectorData; // sample(dedupVectorData, 20000); // 
+        vector<array<uint8_t, 32>> dedupVectorDataSubSample = sample(dedupVectorData, 10000); //  dedupVectorData; // 
 
         cout << " Converted unique feature set into vector " << endl;
 
@@ -152,40 +90,6 @@ cv::Mat load_data()
         cout << " Loaded vector into matrix " << endl;
     }
     return m;
-}
-
-int random(int min, int max) //range : [min, max]
-{
-    static bool first = true;
-    if (first)
-    {
-        srand(time(NULL)); //seeding for the first time only!
-        first = false;
-    }
-    return min + rand() % ((max + 1) - min);
-}
-
-int hammingDistance(cv::Mat v1, cv::Mat v2)
-{
-    /*cout << "v1 " << cv::format(v1, cv::Formatter::FMT_PYTHON) << endl;
-    cout << "v1 rows " << v1.rows << endl;
-    cout << "v1 cols " << v1.cols << endl;
-
-    cout << "v2 " << cv::format(v2, cv::Formatter::FMT_PYTHON) << endl;
-    cout << "v2 rows " << v2.rows << endl;
-    cout << "v2 cols " << v2.cols << endl;*/
-
-    // result += popCountTable[a[i] ^ b2[i]];
-    // bitwise_xor(drawing1,drawing2,res);
-    // float * testData1D = (float*)testDataMat.data;
-    // cv::Mat distance;
-    // cv::bitwise_xor(v1, v2, distance);
-    int distance = cv::norm(v1, v2, cv::NORM_HAMMING);
-
-    return distance;
-
-    // cout << " dist " << distance << endl;
-    // return 0;
 }
 
 int seedKernel(cv::Mat data, int currentCentroidIndex, vector<int> centroids, int k) // data, dataIdValue, centroids, k, metric
@@ -289,36 +193,6 @@ void clusterKernel(vector<int> &dataIndices, cv::Mat &data, ConcurrentIndexRange
     clusterMtx.unlock();
 }
 
-vector<ConcurrentIndexRange> rangeCalculator(int count, int partitions)
-{
-    const int batchSize = (int)count / partitions;
-    const int globalRemainder = count - (batchSize * partitions);
-
-    vector<ConcurrentIndexRange> ranges = {};
-
-    int countPartDiff = count - partitions;
-    if (countPartDiff < 0)
-    {
-        partitions += countPartDiff;
-    }
-
-    // so what are the ranges
-    for (int i = 0; i < partitions; i++)
-    {
-        int rangeStart = i * batchSize;
-        int rangeEnd = ((i + 1) * batchSize) - 1;
-        if (i == partitions - 1)
-        {
-            // isLast = true;
-            rangeEnd = rangeEnd + globalRemainder;
-        }
-        cout << "start " << rangeStart << " end " << rangeEnd << endl;
-        ConcurrentIndexRange range = {rangeStart, rangeEnd};
-        ranges.push_back(range);
-    }
-
-    return ranges;
-}
 
 map<int, vector<int>> optimiseClusterMembership(vector<int> &dataIndices, cv::Mat &data, vector<int> &centroidSeedIndices)
 { // data, n=4, metric=hammingVector, intitalClusterIndices=None
@@ -385,39 +259,8 @@ map<int, vector<int>> optimiseClusterMembership(vector<int> &dataIndices, cv::Ma
     return clusterMembership;
 }
 
-/*
-template <class myType>
-myType getKey (myType a) {
- return (a>b?a:b);
-}
-*/
 
-vector<int> getClusterKeys(map<int, vector<int>> m)
-{
-    //     map<int, vector<int>> clusterMembership = {};
-    std::vector<int> keys;
-    for (std::map<int, vector<int>>::iterator it = m.begin(); it != m.end(); ++it)
-    {
-        keys.push_back(it->first);
-    }
-    return keys;
-}
 
-// Surt's code, doesn't preserve sorted order
-void erase_v4(std::vector<int> &vec, int value)
-{
-    // get the range in 2*log2(N), N=vec.size()
-    auto bounds = std::equal_range(vec.begin(), vec.end(), value);
-
-    // calculate the index of the first to be deleted O(1)
-    auto last = vec.end() - std::distance(bounds.first, bounds.second);
-
-    // swap the 2 ranges O(equals) , equal = std::distance(bounds.first, bounds.last)
-    std::swap_ranges(bounds.first, bounds.second, last);
-
-    // erase the victims O(equals)
-    vec.erase(last, vec.end());
-}
 
 std::mutex optimiseSelectionCostMtx; // mutex for critical section
 // map<int, vector<int>> map<int, vector<int>>
@@ -516,43 +359,6 @@ void optimiseSelectionCostKernel(cv::Mat &data, vector<int> &threadTasks, vector
     optimiseSelectionCostMtx.unlock();
 }
 
-map<int, vector<int>> distributeTasks(vector<tuple<int, int>> &tasks, int partitions)
-{
-    map<int, vector<int>> taskDistibution = {};
-    map<int, bool> partitionExists = {};
-    int currentPartition = 0;
-    for (int i = 0; i < tasks.size(); i++)
-    {
-        if (partitionExists[currentPartition] == false)
-        {
-            // make partition
-            taskDistibution[currentPartition] = {};
-            partitionExists[currentPartition] = true;
-        }
-
-        taskDistibution[currentPartition].push_back(i);
-
-        currentPartition++;
-        if (currentPartition % partitions == 0)
-        {
-            currentPartition = 0;
-        }
-    }
-
-    /*for (map<int, vector<int>>::iterator it = taskDistibution.begin(); it != taskDistibution.end(); ++it)
-    {
-        cout << " thread " << it->first << endl;
-        for (int i = 0; i < it->second.size(); i++)
-        {
-            cout << it->second[i] << ", ";
-        }
-        cout << endl;
-        cout << endl;
-        cout << endl;
-    }*/
-
-    return taskDistibution;
-}
 
 pair<long long, map<int, vector<int>>> optimiseCentroidSelectionAndComputeCost(cv::Mat &data, map<int, vector<int>> &clusterMembership)
 {
@@ -653,27 +459,7 @@ pair<long long, map<int, vector<int>>> optimiseCentroidSelectionAndComputeCost(c
     //         if (results.count(clusterId) > 0)
 }
 
-void clusterMembershipPrinter(map<int, vector<int>> clusterMembership)
-{
-    cout << endl;
-    cout << endl;
-    cout << endl;
-    cout << "--------------------------------------------------------------" << endl;
-    for (map<int, vector<int>>::iterator centroid = clusterMembership.begin(); centroid != clusterMembership.end(); ++centroid)
-    {
-        cout << "CentroidIdx: " << centroid->first << endl;
-        auto clusterMembers = clusterMembership[centroid->first];
-        for (auto member = clusterMembers.begin(); member != clusterMembers.end(); ++member)
-        {
-            cout << *member << ", ";
-        }
-        cout << endl;
-    }
-    cout << "--------------------------------------------------------------" << endl;
-    cout << endl;
-    cout << endl;
-    cout << endl;
-}
+
 
 int main(int argc, char **argv)
 {
