@@ -51,7 +51,7 @@ vector<int> seedClusters(cv::Mat data, int _k, vector<int> seeds) // data, k, me
     }
 
     // for the rest of k
-    for (int i = 0; i < k - 1; i++)
+    for (int i = 0; i < k; i++)
     {
         const int nextCentroid = seedKernel(data, i, centroids, k);
         centroids.push_back(nextCentroid);

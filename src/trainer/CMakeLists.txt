@@ -9,6 +9,8 @@ project(trainer)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED)
 
+# set(CMAKE_PREFIX_PATH "${PROJECT_SOURCE_DIR}/src/json/cmake;${CMAKE_PREFIX_PATH})")
+
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
 
@@ -240,7 +242,17 @@ set(OpenCV_LIBS
 
 include_directories(${OpenCV_INCLUDE_DIRS})
 link_directories(${OpenCV_LIB_DIR})
+
+# set(CMAKE_PREFIX_PATH "${PROJECT_SOURCE_DIR}/src/json/build;${CMAKE_PREFIX_PATH})")
+# set(nlohmann_json_DIR "src/nlohmann_json")
+find_package(nlohmann_json REQUIRED)
+# add_subdirectory(nlohmann_json)
+# find_package(nlohmann_json REQUIRED)
+
 add_executable(${PROJECT_NAME} src/trainer.cpp)
+# target_link_libraries(${PROJECT_NAME} nlohmann_json::nlohmann_json)
+
+# target_link_libraries(${PROJECT_NAME} nlohmann_json::nlohmann_json)
 target_link_libraries(${PROJECT_NAME} ${OpenCV_LIBS})
 target_link_libraries(${PROJECT_NAME} LINK_PUBLIC ${Boost_LIBRARIES})
 

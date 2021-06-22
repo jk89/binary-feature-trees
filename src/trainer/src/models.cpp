@@ -3,6 +3,23 @@
 #endif
 using namespace std;
 
+
+/*
+#include "student.h"
+
+
+*/
+/*
+#ifndef STUDENT_H
+#define STUDENT_H
+
+#include<string>
+struct Student {
+    std::string lastName, firstName;
+};
+
+#endif
+*/
 struct ConcurrentIndexRange
 {
     int start;

@@ -2,12 +2,12 @@
 #include <opencv2/core/mat.hpp>
 using namespace std;
 
-map<int, vector<int>> kmedoids(cv::Mat &data, vector<int> &indices, int k, int processor_count) {
+map<int, vector<int>> kmedoids(cv::Mat &data, vector<int> &indices, int k, int processor_count, vector<int> seeds) {
     cout << "details of m rows" << data.rows << " cols " << data.cols << " tyoe " << data.type() << endl;
     cout << "first row: " << cv::format(data.row(0), cv::Formatter::FMT_PYTHON) << endl;
     cout << "second row: " << cv::format(data.row(1), cv::Formatter::FMT_PYTHON) << endl;
     cout << "Seeding clusters:" << endl;
-    vector<int> centroids = seedClusters(data, k, {0});
+    vector<int> centroids = seedClusters(data, k, seeds);
     cout << "Centroids: " << endl;
     for (auto i = centroids.begin(); i != centroids.end(); ++i)
     {
