@@ -164,6 +164,8 @@ void centroidPrinter(vector<int> centroids)
         std::cout << *i << ", ";
     }
 }
+
+
 void clusterMembershipPrinter(map<int, vector<int>> clusterMembership)
 {
     cout << endl;
