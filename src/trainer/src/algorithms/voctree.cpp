@@ -141,8 +141,8 @@ pair<vector<vector<int>>, Node> getModel(char *filename) {} // what about leaf p
 void trainModel(cv::Mat &data)
 {
     vector<int> indices = getRange(data.rows);
-    map<int, vector<int>> lastCluster = kmedoids(data, indices, 8, 12, {0});
-    auto centroids = getClusterKeys(lastCluster);
+    // map<int, vector<int>> lastCluster = kmedoids(data, indices, 8, 12, {0});
+    // auto centroids = getClusterKeys(lastCluster);
     /*TrainingNode rootNode = TrainingNode(data, indices, {}, centroids, nullptr);
     rootNode.set_cluster_membership(lastCluster);*/
 }

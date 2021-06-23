@@ -2,12 +2,14 @@
 #include <opencv2/core/mat.hpp>
 using namespace std;
 
-map<int, vector<int>> kmedoids(cv::Mat &data, vector<int> &indices, int k, int processor_count, vector<int> seeds) {
+map<int, vector<int>> kmedoids(cv::Mat *_data, vector<int> *_indices, int k, int processor_count, vector<int> seeds) {
+    auto data = *_data;
+    auto indices = *_indices;
     cout << "details of m rows" << data.rows << " cols " << data.cols << " tyoe " << data.type() << endl;
     cout << "first row: " << cv::format(data.row(0), cv::Formatter::FMT_PYTHON) << endl;
     cout << "second row: " << cv::format(data.row(1), cv::Formatter::FMT_PYTHON) << endl;
     cout << "Seeding clusters:" << endl;
-    vector<int> centroids = seedClusters(data, k, seeds);
+    vector<int> centroids = seedClusters(_data, k, seeds);
     cout << "Centroids: " << endl;
     for (auto i = centroids.begin(); i != centroids.end(); ++i)
     {
@@ -17,13 +19,13 @@ map<int, vector<int>> kmedoids(cv::Mat &data, vector<int> &indices, int k, int p
 
     // begin fitting
     long long bestCost = LLONG_MAX;
-    auto bestMembership = optimiseClusterMembership(indices, data, centroids, processor_count);
+    auto bestMembership = optimiseClusterMembership(_indices, _data, centroids, processor_count);
     bool escape = false;
 
     int iteration = 0;
     while (escape == false)
     {
-        auto optimalSelectionResults = optimiseCentroidSelectionAndComputeCost(data, bestMembership, processor_count);
+        auto optimalSelectionResults = optimiseCentroidSelectionAndComputeCost(_data, bestMembership, processor_count);
         auto cost = optimalSelectionResults.first;
         auto clusterMembership = optimalSelectionResults.second;
         centroids = getClusterKeys(clusterMembership);
@@ -34,7 +36,7 @@ map<int, vector<int>> kmedoids(cv::Mat &data, vector<int> &indices, int k, int p
         }
         cout << endl;
         cout << " about to opt again" << endl;
-        clusterMembership = optimiseClusterMembership(indices, data, centroids, processor_count);
+        clusterMembership = optimiseClusterMembership(_indices, _data, centroids, processor_count);
         if (cost < bestCost)
         {
             cout << "Optimsiation improving (currentCost, oldCost)" << cost << " , " << bestCost << endl;

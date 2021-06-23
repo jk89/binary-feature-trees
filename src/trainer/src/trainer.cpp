@@ -42,11 +42,12 @@ int main(int argc, char **argv)
     {
         indices.push_back(i);
     }
-    map<int, vector<int>> kmedoidsClusterMembership = kmedoids(data, indices, 8, processor_count, {0});
+    // auto _data = &data;
+    map<int, vector<int>> kmedoidsClusterMembership = kmedoids(&data, &indices, 8, processor_count, {0});
 
     cout << "ALL DONE. Best membership:" << endl;
-    clusterMembershipPrinter(kmedoidsClusterMembership);
+    // clusterMembershipPrinter(kmedoidsClusterMembership);
 
     cout << "Best centroids:" << endl;
-    centroidPrinter(getClusterKeys(kmedoidsClusterMembership));
+    // centroidPrinter(getClusterKeys(kmedoidsClusterMembership));
 }

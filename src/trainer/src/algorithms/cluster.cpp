@@ -6,10 +6,13 @@ using namespace std;
 
 std::mutex clusterMtx; // mutex for critical section
 
-void clusterKernel(vector<int> &dataIndices, cv::Mat &data, ConcurrentIndexRange &range, vector<int> &centroidIndices, map<int, bool> &isCentroid, vector<pair<int, int>> &threadResults) // map<int, vector<int>> &clusterMembership
-{
+void clusterKernel(vector<int> *_dataIndices, cv::Mat *_data, ConcurrentIndexRange &range, vector<int> &centroidIndices, map<int, bool> &isCentroid, vector<pair<int, int>> &threadResults) // map<int, vector<int>> &clusterMembership
+{   
+    auto dataIndices = *_dataIndices;
+    auto data = *_data;
     // cout << "ok" << endl;
     vector<pair<int, int>> localThreadResults;
+
 
     // iterate data within range
     for (int i = range.start; i <= range.end; i++)
@@ -51,9 +54,11 @@ void clusterKernel(vector<int> &dataIndices, cv::Mat &data, ConcurrentIndexRange
     clusterMtx.unlock();
 }
 
-map<int, vector<int>> optimiseClusterMembership(vector<int> &dataIndices, cv::Mat &data, vector<int> &centroidSeedIndices, int processor_count)
+map<int, vector<int>> optimiseClusterMembership(vector<int> *_dataIndices, cv::Mat *_data, vector<int> &centroidSeedIndices, int processor_count)
 { // data, n=4, metric=hammingVector, intitalClusterIndices=None
     cout << "ROUTINE: cluster" << endl; 
+    auto dataIndices = *_dataIndices;
+    auto data = *_data;
     // centroidData
     // processor_count
     // create centroidIndexMap
@@ -105,7 +110,7 @@ map<int, vector<int>> optimiseClusterMembership(vector<int> &dataIndices, cv::Ma
             cout << " centroid " << centroidSeedIndices[c] << endl;
         }
 
-        threads[i] = (thread{clusterKernel, ref(dataIndices), ref(data), ref(ranges[i]), ref(centroidSeedIndices), ref(isCentroid), ref(threadResults)}); // thread(doSomething, i + 1);
+        threads[i] = (thread{clusterKernel, _dataIndices, _data, ref(ranges[i]), ref(centroidSeedIndices), ref(isCentroid), ref(threadResults)}); // thread(doSomething, i + 1);
         cout << "building thread " << i << " done" << endl;
     }
 

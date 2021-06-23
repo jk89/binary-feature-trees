@@ -5,8 +5,10 @@ using namespace std;
 std::mutex optimiseSelectionCostMtx; // mutex for critical section
 // map<int, vector<int>> map<int, vector<int>>
 //  ConcurrentIndexRange &range
-void optimiseSelectionCostKernel(cv::Mat &data, vector<int> &threadTasks, vector<vector<int>> &clusters, vector<tuple<int, int>> &tasks, vector<tuple<int, int, long long, long long>> &resultSet)
+void optimiseSelectionCostKernel(cv::Mat *_data, vector<int> &threadTasks, vector<vector<int>> &clusters, vector<tuple<int, int>> &tasks, vector<tuple<int, int, long long, long long>> &resultSet)
 {
+
+    auto data = *_data;
     cout << "ROUTINE: optimise" << endl;
 
     using std::chrono::duration;
@@ -111,8 +113,9 @@ void optimiseSelectionCostKernel(cv::Mat &data, vector<int> &threadTasks, vector
     optimiseSelectionCostMtx.unlock();
 }
 
-pair<long long, map<int, vector<int>>> optimiseCentroidSelectionAndComputeCost(cv::Mat &data, map<int, vector<int>> &clusterMembership, int processor_count)
+pair<long long, map<int, vector<int>>> optimiseCentroidSelectionAndComputeCost(cv::Mat *_data, map<int, vector<int>> &clusterMembership, int processor_count)
 {
+    auto data = *_data;
     vector<int> centroids = getClusterKeys(clusterMembership);
     vector<vector<int>> clusters = {};
 
@@ -145,7 +148,7 @@ pair<long long, map<int, vector<int>>> optimiseCentroidSelectionAndComputeCost(c
     int ix = 0;
     for (map<int, vector<int>>::iterator it = distributedTasks.begin(); it != distributedTasks.end(); ++it)
     {
-        threads[ix] = thread{optimiseSelectionCostKernel, ref(data), ref(distributedTasks[it->first]), ref(clusters), ref(tasks), ref(resultSet)};
+        threads[ix] = thread{optimiseSelectionCostKernel, _data, ref(distributedTasks[it->first]), ref(clusters), ref(tasks), ref(resultSet)};
         ix++;
     }
     /*for (int i = 0; i < ranges.size(); i++)

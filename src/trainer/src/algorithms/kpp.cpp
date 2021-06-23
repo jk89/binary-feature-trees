@@ -2,8 +2,9 @@
 #include <opencv2/core/mat.hpp>
 using namespace std;
 
-int seedKernel(cv::Mat data, int currentCentroidIndex, vector<int> centroids, int k) // data, dataIdValue, centroids, k, metric
+int seedKernel(cv::Mat *_data, int currentCentroidIndex, vector<int> centroids, int k) // data, dataIdValue, centroids, k, metric
 {
+    auto data = *_data;
     cout << "seed kernel " << currentCentroidIndex << endl;
     int maxDistance = 0;
     int maxIndex = -1;
@@ -34,8 +35,9 @@ int seedKernel(cv::Mat data, int currentCentroidIndex, vector<int> centroids, in
     return maxIndex; // return the best centroid
 }
 
-vector<int> seedClusters(cv::Mat &data, int _k, vector<int> seeds) // data, k, metric
+vector<int> seedClusters(cv::Mat *_data, int _k, vector<int> seeds) // data, k, metric
 {
+    auto data = *_data;
     cout << "ROUTINE: seed" << endl;
 
     // largest index
@@ -53,7 +55,7 @@ vector<int> seedClusters(cv::Mat &data, int _k, vector<int> seeds) // data, k, m
     // for the rest of k
     for (int i = 0; i < k; i++)
     {
-        const int nextCentroid = seedKernel(data, i, centroids, k);
+        const int nextCentroid = seedKernel(_data, i, centroids, k);
         centroids.push_back(nextCentroid);
     }
 
