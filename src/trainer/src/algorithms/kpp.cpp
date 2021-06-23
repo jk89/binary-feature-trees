@@ -35,7 +35,7 @@ int seedKernel(cv::Mat *_data, int currentCentroidIndex, vector<int> centroids, 
     return maxIndex; // return the best centroid
 }
 
-vector<int> seedClusters(cv::Mat *_data, int _k, vector<int> seeds) // data, k, metric
+vector<int> seedCentroids(cv::Mat *_data, int _k, vector<int> seeds) // data, k, metric
 {
     auto data = *_data;
     cout << "ROUTINE: seed" << endl;

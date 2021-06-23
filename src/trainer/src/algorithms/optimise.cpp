@@ -113,7 +113,7 @@ void optimiseSelectionCostKernel(cv::Mat *_data, vector<int> &threadTasks, vecto
     optimiseSelectionCostMtx.unlock();
 }
 
-pair<long long, map<int, vector<int>>> optimiseCentroidSelectionAndComputeCost(cv::Mat *_data, map<int, vector<int>> &clusterMembership, int processor_count)
+pair<long long, map<int, vector<int>>> optimiseCentroidSelectionAndComputeClusterCost(cv::Mat *_data, map<int, vector<int>> &clusterMembership, int processor_count)
 {
     auto data = *_data;
     vector<int> centroids = getClusterKeys(clusterMembership);

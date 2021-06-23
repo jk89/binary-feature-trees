@@ -15,7 +15,7 @@ public:
     vector<Node> children;
     vector<int> centroids;
     vector<int> id;
-    bool isLeafNode = false;
+    // bool isLeafNode = false;
     Node(vector<int> id, vector<int> centroids, Node *parent, Node *root)
     {
         this->centroids = centroids;
@@ -92,7 +92,7 @@ public:
     cv::Mat *data;
     vector<int> level_data_indices = {};
     vector<TrainingNode> children = {};
-    bool isLeafNode = false;
+    // bool isLeafNode = false;
     long long currentPermutationCost = LLONG_MAX;
     int processor_count = 1;
     void set_cluster_membership(map<int, vector<int>> clusterMembers)
@@ -101,13 +101,14 @@ public:
     }
     void fit_level()
     {
+
         if (this->finished == true)
             return;
 
         // if centroid seeds are incomplete
         if (this->centroids.size() != this->k)
         {
-            this->centroids = seedClusters(this->data, this->k, this->centroids);
+            this->centroids = seedCentroids(this->data, this->k, this->centroids);
             centroidPrinter(this->centroids);
         }
 
@@ -115,12 +116,13 @@ public:
         this->centroids = getClusterKeys(this->clusterMembers);
         centroidPrinter(centroids);
         // save
+        this->save();
 
         bool escape = false;
         int iteration = 0;
         while (escape == false)
         {
-            auto optimalSelectionResults = optimiseCentroidSelectionAndComputeCost(this->data, this->clusterMembers, processor_count);
+            auto optimalSelectionResults = optimiseCentroidSelectionAndComputeClusterCost(this->data, this->clusterMembers, processor_count);
             auto cost = optimalSelectionResults.first;
             auto clusterMembership = optimalSelectionResults.second;
             auto centroids = getClusterKeys(clusterMembership);
@@ -137,6 +139,7 @@ public:
                 this->centroids = centroids;
                 centroidPrinter(centroids);
                 // save
+                this->save();
             }
             else
             {
@@ -150,7 +153,7 @@ public:
         {
             auto centroid_id = this->centroids[i];
             auto level_data_indices = this->clusterMembers[centroid_id];
-            if (level_data_indices.size() <= this->k)
+            if (level_data_indices.size() <= this->k) // fixme remove
             {
                 // build leaf node
             }
@@ -162,10 +165,12 @@ public:
 
         this->finished = true;
         // save
+        this->save();
     }
     void process()
     {
         this->fit_level();
+        // children are built by now
 
         // deal with children
         for (int i = 0; i < this->children.size(); i++)
@@ -173,9 +178,36 @@ public:
             this->children[i].fit_level();
         }
     }
+    void save() {
+        json treeData = this->root->serialise();
+        std::string stringTreeData = treeData.dump();
+        // save to file
+    }
     // extensions for model building
     bool finished = false;
-    json serialise() {}
+    json serialise()
+    {
+        json jnode;
+        jnode["id"] = this->id;
+        jnode["data_indices"] = this->level_data_indices;
+        jnode["centroids"] = this->centroids;
+        jnode["currentPermutationCost"] = this->currentPermutationCost;
+        jnode["k"] = this->k;
+        jnode["concurrency"] = this->processor_count;
+        auto children = json::array();
+        for (auto child = this->children.begin(); child != this->children.end(); ++child)
+        {
+            children.push_back(child->serialise());
+        }
+        jnode["children"] = children;
+        /* json clusterMembers = j_map(this->clusterMembers);
+        for (std::map<int, vector<int>>::iterator it = this->clusterMembers.begin(); it != this->clusterMembers.end(); ++it)
+        {
+            clusterMembers[it->first] = this->clusterMembers[it->first];
+        }*/
+        jnode["clusterMembers"] = this->clusterMembers; // clusterMembers;
+        return jnode;
+    }
     Node toNode() {}
     TrainingNode(cv::Mat *data, vector<int> level_data_indices, vector<int> id, vector<int> centroids, int k, int processor_count, TrainingNode *parent, TrainingNode *root) : Node(id, centroids, parent, root)
     {
@@ -190,6 +222,11 @@ public:
         { // if no root is given assume self
             this->root = this;
         }
+        if (level_data_indices.size() <= k * 2) // fixme what is this value?
+        {
+            // we are a leaf node
+            this->finished = true;
+        }
         this->processor_count = processor_count;
     }
 
@@ -199,6 +236,69 @@ public:
     }*/
 };
 
+TrainingNode deserialise(cv::Mat* data, json model, TrainingNode *parent, TrainingNode *root)
+{
+    /*
+ns::person p {
+    j["name"].get<std::string>(),
+    j["address"].get<std::string>(),
+    j["age"].get<int>()
+};
+    */
+    // TrainingNode rootNode = TrainingNode(&data, indices, {}, {0}, 8, 12, nullptr, nullptr);
+    auto level_data_indices = model["data_indicies"].get<vector<int>>();
+    auto id = model["id"].get<vector<int>>();
+    auto centroids = model["centroids"].get<vector<int>>();
+    auto currentPermutationCost = model["currentPermutationCost"].get<int>();
+    auto k = model["k"].get<int>();
+    auto concurrency = model["concurrency"].get<int>();
+    auto children = model["children"];
+    auto clusterMembers = model["clusterMembers"].get<map<int, vector<int>>>();
+
+    TrainingNode node = TrainingNode(data, level_data_indices, id, centroids, k, concurrency, parent, root);
+
+    node.clusterMembers = clusterMembers;
+    node.currentPermutationCost = currentPermutationCost;
+    node.processor_count = concurrency;
+
+    for (json::iterator it = children.begin(); it != children.end(); ++it)
+    {
+        auto key = it.key();
+        auto childModel = children[key];
+        TrainingNode childNode = deserialise(data, childModel, &node, root);
+        node.children.push_back(childNode);
+    }
+
+    return node;
+
+    // TrainingNode node = TrainingNode(&data, indices, {}, {0}, 8, 12, nullptr, nullptr);
+}
+/*
+    json serialise()
+    {
+        json jnode;
+        jnode["id"] = this->id;
+        jnode["data_indices"] = this->level_data_indices;
+        jnode["centroids"] = this->centroids;
+        jnode["currentPermutationCost"] = this->currentPermutationCost;
+        jnode["k"] = this->k;
+        jnode["concurrency"] = this->processor_count;
+        auto children = json::array();
+        for (auto child = this->children.begin(); child != this->children.end(); ++child)
+        {
+            children.push_back(child->serialise());
+        }
+        jnode["children"] = children;
+        json clusterMembers;
+        for (std::map<int, vector<int>>::iterator it = this->clusterMembers.begin(); it != this->clusterMembers.end(); ++it)
+        {
+            clusterMembers[it->first] = this->clusterMembers[it->first];
+        }
+        jnode["clusterMembers"] = clusterMembers;
+        return jnode;
+    }
+*/
+
 /*
 it=mymap.find('key');
   mymap.erase (it);  
@@ -207,7 +307,9 @@ it=mymap.find('key');
 // factory method
 
 // pair of leaf paths (aka word ids) and the root node;
-pair<vector<vector<int>>, Node> getModel(char *filename) {} // what about leaf paths
+pair<vector<vector<int>>, Node> getModel(char *filename)
+{
+} // what about leaf paths
 // can an empty vector be a valid key index? probably yes
 
 /*
@@ -227,7 +329,11 @@ void trainModel(cv::Mat data)
     // map<int, vector<int>> lastCluster = kmedoids(data, indices, 8, 12, {0});
     // auto centroids = getClusterKeys(lastCluster);
     // cv::Mat* _data = &data;
+    // need a model name
     TrainingNode rootNode = TrainingNode(&data, indices, {}, {0}, 8, 12, nullptr, nullptr);
+    rootNode.process();
+
+    cout << " All training finished " << endl;
     // TrainingNode(_data, indices, {}, {0}, nullptr, nullptr); //
     // TrainingNode()
     // rootNode.set_cluster_membership(lastCluster);*/

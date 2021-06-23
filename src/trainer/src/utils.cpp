@@ -164,6 +164,13 @@ void centroidPrinter(vector<int> centroids)
         std::cout << *i << ", ";
     }
 }
+/*
+json vectorIntArrayTojsonArray(vector<int> input) {
+    json output;
+    for (int i = 0; i < input.size(); i++) {
+        output.push_back()
+    }
+}*/
 
 
 void clusterMembershipPrinter(map<int, vector<int>> clusterMembership)
