@@ -162,6 +162,7 @@ public:
         // CHILDREN ARE BEING DOUBLED OR
         //
         // build children
+        this->children = {};
         for (int i = 0; i < (this->centroids.size()); i++)
         {
             auto centroid_id = this->centroids[i];
@@ -177,7 +178,7 @@ public:
             cout << "4" << endl;
             cout << "building child " << i << endl;
             auto child = TrainingNode(this->root->vocTreeFile, this->data, level_data_indices, newId, {0}, this->k, this->processor_count, this, this->root);
-            children.push_back(child);
+            this->children.push_back(child);
         }
 
         this->finished = true;
