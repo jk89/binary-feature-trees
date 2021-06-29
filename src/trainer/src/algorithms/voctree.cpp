@@ -162,7 +162,7 @@ public:
         // CHILDREN ARE BEING DOUBLED OR
         //
         // build children
-        this->children = {};
+        // this->children = {};
         for (int i = 0; i < (this->centroids.size()); i++)
         {
             auto centroid_id = this->centroids[i];
@@ -266,7 +266,7 @@ level_data_indices.size() <= k * 2
         {
             // we are a leaf node
             this->finished = true;
-            this->save();
+            // this->save();
         }
     }
 
@@ -293,7 +293,7 @@ ns::person p {
     // cout << "something wierd is happening" << model["id"].size() << endl;
     // cout << " id size" << id.size() << endl;
     auto centroids = model["centroids"].get<vector<int>>();
-    auto currentPermutationCost = model["currentPermutationCost"].get<int>();
+    auto currentPermutationCost = model["currentPermutationCost"].get<long long>();
     auto k = model["k"].get<int>();
     auto concurrency = model["concurrency"].get<int>();
     auto children = model["children"];
@@ -411,19 +411,26 @@ void trainModel(string modelName)
     cv::Mat data = readFeaturesFromFile((char *)featureFile.c_str());
 
     // if the voctree file exists
-    if (treeFileExists == true)
+    /*if (treeFileExists == true)
     {
-        json model = read_jsonfile(vocTree);
-        TrainingNode rootNode = deserialise(vocTree, &data, model, nullptr, nullptr);
-        rootNode.process();
+
+        // rootNode.process();
     }
     else
     {
         vector<int> indices = getRange(data.rows);
         // {47743, 211873, 225696, 300333, 316793, 324287, 460397, 485301
         TrainingNode rootNode = TrainingNode(vocTree, &data, indices, {}, {0}, 8, 12, nullptr, nullptr);
-        rootNode.process();
-    }
+        // rootNode.process();
+    }*/
+
+    //json model = read_jsonfile(vocTree);
+            vector<int> indices = getRange(data.rows);
+
+            TrainingNode rootNode = TrainingNode(vocTree, &data, indices, {}, {0}, 8, 12, nullptr, nullptr);
+    //TrainingNode rootNode = deserialise(vocTree, &data, model, nullptr, nullptr);
+    rootNode.process();
+    rootNode.save();
 
     // modelName
     // vector<int> indices = getRange(data.rows);
