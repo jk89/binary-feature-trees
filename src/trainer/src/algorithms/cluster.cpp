@@ -147,7 +147,12 @@ map<int, vector<int>> optimiseClusterMembership(vector<int> *_dataIndices, cv::M
     for (int i = 0; i < futures.size(); i++)
     {
         auto data = futures[i].get();
-        threadResults.insert(threadResults.end(), data.begin(), data.end());
+        for (int i = 0; i < data.size(); i++)
+        {
+            // cout << " pair results, data index: " << threadResults[i].second << " centroid index " << threadResults[i].first << endl;
+            clusterMembership[data[i].first].push_back(data[i].second);
+        }
+        // threadResults.insert(threadResults.end(), data.begin(), data.end());
     }
 
     /*int j = 0;
@@ -158,15 +163,15 @@ map<int, vector<int>> optimiseClusterMembership(vector<int> *_dataIndices, cv::M
         j++;
     }*/
 
-    cout << " RESULT SET SIZE " << threadResults.size() << endl;
+    // cout << " RESULT SET SIZE " << threadResults.size() << endl;
 
     // FIXME POSSIBLE BUG HERE
-    for (int i = 0; i < threadResults.size(); i++)
+    /*for (int i = 0; i < threadResults.size(); i++)
     {
         // cout << " pair results, data index: " << threadResults[i].second << " centroid index " << threadResults[i].first << endl;
         clusterMembership[threadResults[i].first].push_back(threadResults[i].second);
-    }
-    cout << endl;
+    }*/
+    // cout << endl;
 
     clusterMembershipPrinter(clusterMembership);
 

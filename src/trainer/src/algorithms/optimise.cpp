@@ -178,38 +178,39 @@ pair<long long, map<int, vector<int>>> optimiseCentroidSelectionAndComputeCluste
         futures[i].wait();
     }
 
-    for (int i = 0; i < futures.size(); i++)
-    {
-        auto data = futures[i].get();
-        resultSet.insert(resultSet.end(), data.begin(), data.end());
-    }
 
     map<int, bool> resultHasCluster = {};
     map<int, tuple<int, long long, long long>> resultSetAgg = {}; // clusterId => bestCentroidId, bestCentroidCost, totalCost
-    for (int i = 0; i < resultSet.size(); i++)
-    {
-        auto clusterId = get<0>(resultSet[i]);
-        auto bestCentroidId = get<1>(resultSet[i]);
-        auto bestCentroidCost = get<2>(resultSet[i]);
-        auto totalCost = get<3>(resultSet[i]);
-        if (resultHasCluster[clusterId] == true) // resultSetAgg.count(clusterId) > 0
-        {
-            int bestGlobalCentroidCost = get<1>(resultSetAgg[clusterId]);
-            int bestGlobalCentroidIndex = get<0>(resultSetAgg[clusterId]);
-            long long newGlobalTotal = get<2>(resultSetAgg[clusterId]) + totalCost;
 
-            if (bestCentroidCost < bestGlobalCentroidCost)
-            {
-                bestGlobalCentroidCost = bestCentroidCost;
-                bestGlobalCentroidIndex = bestCentroidId;
-            }
-            resultSetAgg[clusterId] = make_tuple(bestGlobalCentroidIndex, bestGlobalCentroidCost, newGlobalTotal);
-        }
-        else
+    for (int i = 0; i < futures.size(); i++)
+    {
+        auto data = futures[i].get();
+        for (int i = 0; i < data.size(); i++)
         {
-            resultSetAgg[clusterId] = make_tuple(bestCentroidId, bestCentroidCost, totalCost);
-            resultHasCluster[clusterId] = true;
+            auto clusterId = get<0>(data[i]);
+            auto bestCentroidId = get<1>(data[i]);
+            auto bestCentroidCost = get<2>(data[i]);
+            auto totalCost = get<3>(data[i]);
+            if (resultHasCluster[clusterId] == true) // resultSetAgg.count(clusterId) > 0
+            {
+                int bestGlobalCentroidCost = get<1>(resultSetAgg[clusterId]);
+                int bestGlobalCentroidIndex = get<0>(resultSetAgg[clusterId]);
+                long long newGlobalTotal = get<2>(resultSetAgg[clusterId]) + totalCost;
+
+                if (bestCentroidCost < bestGlobalCentroidCost)
+                {
+                    bestGlobalCentroidCost = bestCentroidCost;
+                    bestGlobalCentroidIndex = bestCentroidId;
+                }
+                resultSetAgg[clusterId] = make_tuple(bestGlobalCentroidIndex, bestGlobalCentroidCost, newGlobalTotal);
+            }
+            else
+            {
+                resultSetAgg[clusterId] = make_tuple(bestCentroidId, bestCentroidCost, totalCost);
+                resultHasCluster[clusterId] = true;
+            }
         }
+        // resultSet.insert(resultSet.end(), data.begin(), data.end());
     }
 
     // contrust total cost for all clusters

@@ -158,7 +158,9 @@ public:
         cout << "building next level" << endl;
 
         // destroy children
-
+        // FIXME THIS IS GOING WRONG
+        // CHILDREN ARE BEING DOUBLED OR
+        //
         // build children
         for (int i = 0; i < (this->centroids.size()); i++)
         {
@@ -408,19 +410,19 @@ void trainModel(string modelName)
     cv::Mat data = readFeaturesFromFile((char *)featureFile.c_str());
 
     // if the voctree file exists
-    /*if (treeFileExists == true)
+    if (treeFileExists == true)
     {
         json model = read_jsonfile(vocTree);
         TrainingNode rootNode = deserialise(vocTree, &data, model, nullptr, nullptr);
         rootNode.process();
     }
     else
-    {*/
+    {
         vector<int> indices = getRange(data.rows);
         // {47743, 211873, 225696, 300333, 316793, 324287, 460397, 485301
         TrainingNode rootNode = TrainingNode(vocTree, &data, indices, {}, {0}, 8, 12, nullptr, nullptr);
         rootNode.process();
-    //}
+    }
 
     // modelName
     // vector<int> indices = getRange(data.rows);
