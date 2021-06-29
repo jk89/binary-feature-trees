@@ -1,11 +1,13 @@
 #include <opencv2/opencv.hpp>
 #include <opencv2/core/mat.hpp>
+#include <future>
+
 using namespace std;
 
 std::mutex optimiseSelectionCostMtx; // mutex for critical section
 // map<int, vector<int>> map<int, vector<int>>
 //  ConcurrentIndexRange &range
-void optimiseSelectionCostKernel(cv::Mat *_data, vector<int> &threadTasks, vector<vector<int>> &clusters, vector<tuple<int, int>> &tasks, vector<tuple<int, int, long long, long long>> &resultSet)
+vector<tuple<int, int, long long, long long>> optimiseSelectionCostKernel(cv::Mat *_data, vector<int> &threadTasks, vector<vector<int>> &clusters, vector<tuple<int, int>> &tasks) // vector<tuple<int, int, long long, long long>> &resultSet
 {
     auto data = *_data;
     using std::chrono::duration;
@@ -98,16 +100,19 @@ void optimiseSelectionCostKernel(cv::Mat *_data, vector<int> &threadTasks, vecto
         localResultSet.push_back(make_tuple(key, get<0>(value), get<1>(value), get<2>(value)));
     }
 
+    return localResultSet;
+
     //
 
-    optimiseSelectionCostMtx.lock();
+    /*optimiseSelectionCostMtx.lock();
+    resultSet.insert(resultSet.end(), localResultSet.begin(), localResultSet.end());
+    optimiseSelectionCostMtx.unlock();*/
+
     /*for (auto x = localResultSet.begin(); x < localResultSet.end(); ++x)
     {
         auto it = *x;
         cout << get<0>(it) << ", " << get<1>(it) << ", " << get<2>(it) << endl;
     }*/
-    resultSet.insert(resultSet.end(), localResultSet.begin(), localResultSet.end());
-    optimiseSelectionCostMtx.unlock();
 }
 
 pair<long long, map<int, vector<int>>> optimiseCentroidSelectionAndComputeClusterCost(cv::Mat *_data, map<int, vector<int>> &clusterMembership, int processor_count)
@@ -139,7 +144,9 @@ pair<long long, map<int, vector<int>>> optimiseCentroidSelectionAndComputeCluste
 
     auto distributedTasks = distributeTasks(tasks, processor_count);
 
-    vector<thread> threads(processor_count);
+    // vector<thread> threads(processor_count);
+    vector<std::future<std::vector<std::tuple<int, int, long long, long long>>>> futures = {};
+
     vector<tuple<int, int, long long, long long>> resultSet = {}; // clusterId, bestCentroidId, bestCentroidCost, totalCost
 
     cout << " about to optimisse selection. tasks:" << tasks.size() << endl;
@@ -148,7 +155,11 @@ pair<long long, map<int, vector<int>>> optimiseCentroidSelectionAndComputeCluste
     for (map<int, vector<int>>::iterator it = distributedTasks.begin(); it != distributedTasks.end(); ++it)
     {
         cout << "booting thread " << ix << endl;
-        threads[ix] = thread{optimiseSelectionCostKernel, _data, ref(distributedTasks[it->first]), ref(clusters), ref(tasks), ref(resultSet)};
+        auto future = std::async(std::launch::async, [&]()
+                                 { return optimiseSelectionCostKernel(_data, distributedTasks[it->first], clusters, tasks); });
+        futures.push_back(std::move(future));
+
+        // threads[ix] = thread{optimiseSelectionCostKernel, _data, ref(distributedTasks[it->first]), ref(clusters), ref(tasks), ref(resultSet)};
         ix++;
     }
     /*for (int i = 0; i < ranges.size(); i++)
@@ -158,9 +169,19 @@ pair<long long, map<int, vector<int>>> optimiseCentroidSelectionAndComputeCluste
         threads[i] = thread{optimiseSelectionCostKernel, ref(data), ref(ranges[i]), ref(clusters), ref(tasks), ref(resultSet)};
     }*/
     cout << "about to join in optimisie selection" << endl;
-    for (auto &th : threads)
+    /*for (auto &th : threads)
     {
         th.join();
+    }*/
+    for (int i = 0; i < futures.size(); i++)
+    {
+        futures[i].wait();
+    }
+
+    for (int i = 0; i < futures.size(); i++)
+    {
+        auto data = futures[i].get();
+        resultSet.insert(resultSet.end(), data.begin(), data.end());
     }
 
     map<int, bool> resultHasCluster = {};
