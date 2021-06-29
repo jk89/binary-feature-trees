@@ -4,8 +4,9 @@ using namespace std;
 
 int seedKernel(cv::Mat *_data, int currentCentroidIndex, vector<int> centroids, int k) // data, dataIdValue, centroids, k, metric
 {
+        cout << "seed kernel " << currentCentroidIndex << endl;
+
     auto data = *_data;
-    cout << "seed kernel " << currentCentroidIndex << endl;
     int maxDistance = 0;
     int maxIndex = -1;
     // for the whole dataset of features
@@ -37,8 +38,8 @@ int seedKernel(cv::Mat *_data, int currentCentroidIndex, vector<int> centroids, 
 
 vector<int> seedCentroids(cv::Mat *_data, int _k, vector<int> seeds) // data, k, metric
 {
-    auto data = *_data;
     cout << "ROUTINE: seed" << endl;
+    auto data = *_data;
 
     // largest index
     const int dataLength = data.rows;

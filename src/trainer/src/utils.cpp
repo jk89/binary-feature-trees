@@ -150,10 +150,15 @@ vector<int> getClusterKeys(map<int, vector<int>> m)
 {
     //     map<int, vector<int>> clusterMembership = {};
     std::vector<int> keys;
+    cout << "inited keys" << endl;
+    int idx = 0;
     for (std::map<int, vector<int>>::iterator it = m.begin(); it != m.end(); ++it)
     {
+        cout << "current IDX " << idx;
         keys.push_back(it->first);
+        idx++;
     }
+    cout << endl;
     return keys;
 }
 
@@ -253,7 +258,7 @@ cv::Mat load_data(char *filename)
         vector<array<uint8_t, 32>> dedupVectorData = {}; // uint8_t[32]
         dedupVectorData.assign(dedupedSetData.begin(), dedupedSetData.end());
 
-        vector<array<uint8_t, 32>> dedupVectorDataSubSample = random_sample(dedupVectorData, 500000); //  dedupVectorData; //
+        vector<array<uint8_t, 32>> dedupVectorDataSubSample = random_sample(dedupVectorData, 5000); //  dedupVectorData; //
 
         cout << " Converted unique feature set into vector " << endl;
 
@@ -289,4 +294,13 @@ vector<int> getRange(int range)
         indices.push_back(i);
     }
     return indices;
+}
+
+bool file_exists (const std::string& name) {
+    if (FILE *file = fopen(name.c_str(), "r")) {
+        fclose(file);
+        return true;
+    } else {
+        return false;
+    }   
 }

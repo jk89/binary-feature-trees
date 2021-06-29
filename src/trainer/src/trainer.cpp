@@ -34,7 +34,13 @@ const auto processor_count = std::thread::hardware_concurrency();
 
 int main(int argc, char **argv)
 {
-    cv::Mat data;
+    /*cv::Mat data;
+    data =  load_data(filename);
+    writeFeaturesToFile("smallest_features.yml", data);
+    exit(0);*/
+
+    trainModel("small");
+   /* cv::Mat data;
     data =  readFeaturesFromFile("data/features.yml");//  load_data(filename); // 
     // writeFeaturesToFile("features.yml", data);
     vector<int> indices;
@@ -49,5 +55,5 @@ int main(int argc, char **argv)
     // clusterMembershipPrinter(kmedoidsClusterMembership);
 
     cout << "Best centroids:" << endl;
-    // centroidPrinter(getClusterKeys(kmedoidsClusterMembership));
+    // centroidPrinter(getClusterKeys(kmedoidsClusterMembership));*/
 }

@@ -7,10 +7,7 @@ std::mutex optimiseSelectionCostMtx; // mutex for critical section
 //  ConcurrentIndexRange &range
 void optimiseSelectionCostKernel(cv::Mat *_data, vector<int> &threadTasks, vector<vector<int>> &clusters, vector<tuple<int, int>> &tasks, vector<tuple<int, int, long long, long long>> &resultSet)
 {
-
     auto data = *_data;
-    cout << "ROUTINE: optimise" << endl;
-
     using std::chrono::duration;
     using std::chrono::duration_cast;
     using std::chrono::high_resolution_clock;
@@ -115,6 +112,8 @@ void optimiseSelectionCostKernel(cv::Mat *_data, vector<int> &threadTasks, vecto
 
 pair<long long, map<int, vector<int>>> optimiseCentroidSelectionAndComputeClusterCost(cv::Mat *_data, map<int, vector<int>> &clusterMembership, int processor_count)
 {
+    cout << "ROUTINE: selection" << endl;
+
     auto data = *_data;
     vector<int> centroids = getClusterKeys(clusterMembership);
     vector<vector<int>> clusters = {};
@@ -148,6 +147,7 @@ pair<long long, map<int, vector<int>>> optimiseCentroidSelectionAndComputeCluste
     int ix = 0;
     for (map<int, vector<int>>::iterator it = distributedTasks.begin(); it != distributedTasks.end(); ++it)
     {
+        cout << "booting thread " << ix << endl;
         threads[ix] = thread{optimiseSelectionCostKernel, _data, ref(distributedTasks[it->first]), ref(clusters), ref(tasks), ref(resultSet)};
         ix++;
     }
@@ -157,6 +157,7 @@ pair<long long, map<int, vector<int>>> optimiseCentroidSelectionAndComputeCluste
 
         threads[i] = thread{optimiseSelectionCostKernel, ref(data), ref(ranges[i]), ref(clusters), ref(tasks), ref(resultSet)};
     }*/
+    cout << "about to join in optimisie selection" << endl;
     for (auto &th : threads)
     {
         th.join();

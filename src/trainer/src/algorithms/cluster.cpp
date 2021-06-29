@@ -135,6 +135,8 @@ map<int, vector<int>> optimiseClusterMembership(vector<int> *_dataIndices, cv::M
     cout << endl;
 
     clusterMembershipPrinter(clusterMembership);
+
+    cout << " about to return cluster membeship" << endl;
     // m = cv::Mat(dedupVectorData.size(), 32, CV_8U)
     // map<int, vector<int>> clusterMembership = {};
     return clusterMembership;
