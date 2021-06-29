@@ -188,6 +188,7 @@ public:
         // deal with children
         for (int i = 0; i < this->children.size(); i++)
         {
+            cout << "calling fit for child" << i << endl;
             /*
 level_data_indices.size() <= k * 2
             */
