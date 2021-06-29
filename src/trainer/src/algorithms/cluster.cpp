@@ -6,8 +6,9 @@ using namespace std;
 
 std::mutex clusterMtx; // mutex for critical section
 
-void clusterKernel(vector<int> *_dataIndices, cv::Mat *_data, ConcurrentIndexRange &range, vector<int> &centroidIndices, map<int, bool> &isCentroid, vector<pair<int, int>> &threadResults) // map<int, vector<int>> &clusterMembership
+void clusterKernel(vector<int> *_dataIndices, cv::Mat *_data, vector<int> &range, vector<int> &centroidIndices, map<int, bool> &isCentroid, vector<pair<int, int>> &threadResults) // map<int, vector<int>> &clusterMembership
 {   
+    cout << "here   " << endl;
     auto dataIndices = *_dataIndices;
     auto data = *_data;
     // cout << "ok" << endl;
@@ -15,8 +16,9 @@ void clusterKernel(vector<int> *_dataIndices, cv::Mat *_data, ConcurrentIndexRan
 
 
     // iterate data within range
-    for (int i = range.start; i <= range.end; i++)
-    {
+    for (int x = 0; x < range.size(); x++)
+    {   
+        int i = range[x];
         bool isDataPointACentroid = isCentroid[i];
         if (isDataPointACentroid == true)
             continue; // skip calculating optimal membership for centroids as they are not members of any cluster
@@ -54,6 +56,8 @@ void clusterKernel(vector<int> *_dataIndices, cv::Mat *_data, ConcurrentIndexRan
     clusterMtx.unlock();
 }
 
+//     auto distributedTasks = distributeTasks(tasks, processor_count);
+
 map<int, vector<int>> optimiseClusterMembership(vector<int> *_dataIndices, cv::Mat *_data, vector<int> &centroidSeedIndices, int processor_count)
 { // data, n=4, metric=hammingVector, intitalClusterIndices=None
     cout << "ROUTINE: cluster" << endl; 
@@ -67,6 +71,9 @@ map<int, vector<int>> optimiseClusterMembership(vector<int> *_dataIndices, cv::M
 
     const int dataRowCount = dataIndices.size(); // data.rows;
     const int threadPool = processor_count;
+
+    auto range = getRange(dataRowCount);
+    auto distributedTasks = distributeTasks(range, threadPool);
 
     vector<ConcurrentIndexRange> ranges = rangeCalculator(dataRowCount, threadPool);
 
@@ -110,7 +117,7 @@ map<int, vector<int>> optimiseClusterMembership(vector<int> *_dataIndices, cv::M
             cout << " centroid " << centroidSeedIndices[c] << endl;
         }
 
-        threads[i] = (thread{clusterKernel, _dataIndices, _data, ref(ranges[i]), ref(centroidSeedIndices), ref(isCentroid), ref(threadResults)}); // thread(doSomething, i + 1);
+        threads[i] = (thread{clusterKernel, _dataIndices, _data, ref(distributedTasks[i]), ref(centroidSeedIndices), ref(isCentroid), ref(threadResults)}); // thread(doSomething, i + 1);
         cout << "building thread " << i << " done" << endl;
     }
 

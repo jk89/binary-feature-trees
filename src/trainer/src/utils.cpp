@@ -53,6 +53,41 @@ map<int, vector<int>> distributeTasks(vector<tuple<int, int>> &tasks, int partit
     return taskDistibution;
 }
 
+map<int, vector<int>> distributeTasks(vector<int> &tasks, int partitions)
+{
+    map<int, vector<int>> taskDistibution = {};
+    map<int, bool> partitionExists = {};
+    int currentPartition = 0;
+    for (int i = 0; i < tasks.size(); i++)
+    {
+        if (partitionExists[currentPartition] == false)
+        {
+            // make partition
+            taskDistibution[currentPartition] = {};
+            partitionExists[currentPartition] = true;
+        }
+
+        taskDistibution[currentPartition].push_back(i);
+
+        currentPartition++;
+        if (currentPartition % partitions == 0)
+        {
+            currentPartition = 0;
+        }
+    }
+
+    /*for (int i = 0; i < partitions; i++) {
+        cout << "partition " << i << endl;
+        auto taskIndicies = taskDistibution[i];
+        for (int j = 0; j < taskIndicies.size(); j++) {
+            cout << taskIndicies[j] << ", ";
+        }
+        cout << endl;
+    }*/
+
+    return taskDistibution;
+}
+
 /**
  * \brief   Return the filenames of all files that have the specified extension
  *          in the specified directory and all subdirectories.
