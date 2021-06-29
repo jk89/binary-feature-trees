@@ -157,6 +157,8 @@ public:
 
         cout << "building next level" << endl;
 
+        // destroy children
+
         // build children
         for (int i = 0; i < (this->centroids.size()); i++)
         {
@@ -201,7 +203,7 @@ level_data_indices.size() <= k * 2
                 this->children[i].finished = true;
                 this->save();
             }*/
-            this->children[i].fit_level();
+            this->children[i].process();
         }
     }
     void save()
@@ -257,12 +259,12 @@ level_data_indices.size() <= k * 2
         this->root->vocTreeFile = modelName;
         this->processor_count = processor_count;
 
-        /*if (level_data_indices.size() <= k * 2) // fixme what is this value?
+        if (level_data_indices.size() <= k * 2) // fixme what is this value?
         {
             // we are a leaf node
             this->finished = true;
             this->save();
-        }*/
+        }
     }
 
     // constructor for leaf node

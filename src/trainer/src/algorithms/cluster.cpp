@@ -22,12 +22,18 @@ vector<pair<int, int>> clusterKernel(vector<int> *_dataIndices, cv::Mat *_data, 
         int i = range[x];
         cout << "here  3 " << endl;
         bool isDataPointACentroid = isCentroid[i];
+        cout << "here 4" << endl;
         if (isDataPointACentroid == true)
             continue; // skip calculating optimal membership for centroids as they are not members of any cluster
+        cout << "here 5" << endl;
 
         // convert range index to data index
         int dataIndex = dataIndices[i];
+        cout << "here 6" << endl;
+
         const cv::Mat currentFeatureData = data.row(dataIndex);
+
+        cout << "here 7" << endl;
 
         int nearestCentroidIndex = -1;
         long long nearestDistance = LLONG_MAX;
