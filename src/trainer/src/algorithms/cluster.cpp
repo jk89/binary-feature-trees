@@ -1,24 +1,26 @@
 #include <opencv2/opencv.hpp>
 #include <opencv2/core/mat.hpp>
 #include <thread>
+#include <future>
 
 using namespace std;
 
 std::mutex clusterMtx; // mutex for critical section
 
-void clusterKernel(vector<int> *_dataIndices, cv::Mat *_data, vector<int> &range, vector<int> &centroidIndices, map<int, bool> &isCentroid, vector<pair<int, int>> &threadResults) // map<int, vector<int>> &clusterMembership
-{   
+vector<pair<int, int>> clusterKernel(vector<int> *_dataIndices, cv::Mat *_data, vector<int> &range, vector<int> &centroidIndices, map<int, bool> &isCentroid) // map<int, vector<int>> &clusterMembership  vector<pair<int, int>> &threadResults
+{
     cout << "here   " << endl;
     auto dataIndices = *_dataIndices;
     auto data = *_data;
     // cout << "ok" << endl;
     vector<pair<int, int>> localThreadResults;
 
-
     // iterate data within range
     for (int x = 0; x < range.size(); x++)
-    {   
+    {
+        cout << "here  2  " << endl;
         int i = range[x];
+        cout << "here  3 " << endl;
         bool isDataPointACentroid = isCentroid[i];
         if (isDataPointACentroid == true)
             continue; // skip calculating optimal membership for centroids as they are not members of any cluster
@@ -50,17 +52,18 @@ void clusterKernel(vector<int> *_dataIndices, cv::Mat *_data, vector<int> &range
         // cout << "di " << dataIndex << "ci " << nearestCentroidIndex << endl;
         localThreadResults.push_back(make_pair(nearestCentroidIndex, dataIndex));
     }
+    return localThreadResults;
     // clusterMtx
-    clusterMtx.lock();
+    /*clusterMtx.lock();
     threadResults.insert(threadResults.end(), localThreadResults.begin(), localThreadResults.end());
-    clusterMtx.unlock();
+    clusterMtx.unlock();*/
 }
 
 //     auto distributedTasks = distributeTasks(tasks, processor_count);
 
 map<int, vector<int>> optimiseClusterMembership(vector<int> *_dataIndices, cv::Mat *_data, vector<int> &centroidSeedIndices, int processor_count)
 { // data, n=4, metric=hammingVector, intitalClusterIndices=None
-    cout << "ROUTINE: cluster" << endl; 
+    cout << "ROUTINE: cluster" << endl;
     auto dataIndices = *_dataIndices;
     auto data = *_data;
     // centroidData
@@ -95,8 +98,12 @@ map<int, vector<int>> optimiseClusterMembership(vector<int> *_dataIndices, cv::M
     // const int centroidIndex = centroidSeedIndices[0];
     // const cv::Mat centroidData = data.row(centroidIndex);
 
-    vector<thread> threads(threadPool);
+    // vector<pair<int, int>>
+
+    // vector<thread> threads(threadPool);
     vector<pair<int, int>> threadResults = {};
+    // std::future<std::vector<std::pair<int, int>>> future
+    vector<std::future<std::vector<std::pair<int, int>>>> futures = {};
 
     cout << " initing the pools " << endl;
 
@@ -110,26 +117,40 @@ map<int, vector<int>> optimiseClusterMembership(vector<int> *_dataIndices, cv::M
         /*
 
         */
-        cout << "ranges i start" << ranges[i].start << endl;
+        auto future = std::async(std::launch::async, [&]()
+                                 { return clusterKernel(_dataIndices, _data, distributedTasks[i], centroidSeedIndices, isCentroid); });
+        futures.push_back(std::move(future));
+        /*cout << "ranges i start" << ranges[i].start << endl;
         cout << "ranges i end" << ranges[i].end << endl;
         for (int c = 0; c < centroidSeedIndices.size(); c++)
         {
             cout << " centroid " << centroidSeedIndices[c] << endl;
-        }
+        }*/
 
-        threads[i] = (thread{clusterKernel, _dataIndices, _data, ref(distributedTasks[i]), ref(centroidSeedIndices), ref(isCentroid), ref(threadResults)}); // thread(doSomething, i + 1);
+        // threads[i] = (thread{clusterKernel, _dataIndices, _data, ref(distributedTasks[i]), ref(centroidSeedIndices), ref(isCentroid), ref(threadResults)}); // thread(doSomething, i + 1);
         cout << "building thread " << i << " done" << endl;
     }
 
     cout << " about to join " << endl;
 
-    int j = 0;
+    for (int i = 0; i < futures.size(); i++)
+    {
+        futures[i].wait();
+    }
+
+    for (int i = 0; i < futures.size(); i++)
+    {
+        auto data = futures[i].get();
+        threadResults.insert(threadResults.end(), data.begin(), data.end());
+    }
+
+    /*int j = 0;
     for (auto &th : threads)
     {
         cout << "joining thread " << j << endl;
         th.join();
         j++;
-    }
+    }*/
 
     cout << " RESULT SET SIZE " << threadResults.size() << endl;
 

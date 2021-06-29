@@ -17,6 +17,7 @@
 #include "algorithms/optimise.cpp"
 #include "algorithms/kmedoids.cpp"
 #include "algorithms/voctree.cpp"
+         // std::async, std::future
 
 // using namespace cv;
 using namespace std;

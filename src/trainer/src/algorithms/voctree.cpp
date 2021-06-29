@@ -183,6 +183,7 @@ public:
     void process()
     {
         this->fit_level();
+        cout << "finished this level children are fined by now" << endl;
         // children are built by now
 
         // deal with children
@@ -405,19 +406,19 @@ void trainModel(string modelName)
     cv::Mat data = readFeaturesFromFile((char *)featureFile.c_str());
 
     // if the voctree file exists
-    if (treeFileExists == true)
+    /*if (treeFileExists == true)
     {
         json model = read_jsonfile(vocTree);
         TrainingNode rootNode = deserialise(vocTree, &data, model, nullptr, nullptr);
         rootNode.process();
     }
     else
-    {
+    {*/
         vector<int> indices = getRange(data.rows);
         // {47743, 211873, 225696, 300333, 316793, 324287, 460397, 485301
         TrainingNode rootNode = TrainingNode(vocTree, &data, indices, {}, {0}, 8, 12, nullptr, nullptr);
         rootNode.process();
-    }
+    //}
 
     // modelName
     // vector<int> indices = getRange(data.rows);
