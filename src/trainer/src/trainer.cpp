@@ -40,7 +40,7 @@ int main(int argc, char **argv)
     writeFeaturesToFile("smallest_features.yml", data);
     exit(0);*/
 
-    trainModel("small");
+    trainModel("smallest");
    /* cv::Mat data;
     data =  readFeaturesFromFile("data/features.yml");//  load_data(filename); // 
     // writeFeaturesToFile("features.yml", data);
