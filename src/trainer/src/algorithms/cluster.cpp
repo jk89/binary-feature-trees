@@ -30,7 +30,7 @@ vector<pair<int, int>> clusterKernel(vector<int> *_dataIndices, cv::Mat *_data, 
         // convert range index to data index
         int dataIndex = dataIndices[i];
         cout << "here 6" << endl;
-
+// crashed here
         const cv::Mat currentFeatureData = data.row(dataIndex);
 
         cout << "here 7" << endl;
