@@ -17,7 +17,8 @@
 #include "algorithms/optimise.cpp"
 #include "algorithms/kmedoids.cpp"
 #include "algorithms/voctree.cpp"
-         // std::async, std::future
+#include <time.h>
+// std::async, std::future
 
 // using namespace cv;
 using namespace std;
@@ -39,9 +40,12 @@ int main(int argc, char **argv)
     data =  load_data(filename);
     writeFeaturesToFile("smallest_features.yml", data);
     exit(0);*/
+    //struct timespec delta = {10 /*secs*/, 135 /*nanosecs*/};
+    //while (nanosleep(&delta, &delta));
+    //cout << "slept" << endl;
 
-    trainModel("smallest");
-   /* cv::Mat data;
+    trainModel("small");
+    /* cv::Mat data;
     data =  readFeaturesFromFile("data/features.yml");//  load_data(filename); // 
     // writeFeaturesToFile("features.yml", data);
     vector<int> indices;

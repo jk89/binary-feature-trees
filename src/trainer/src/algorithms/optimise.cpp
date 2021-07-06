@@ -7,7 +7,7 @@ using namespace std;
 std::mutex optimiseSelectionCostMtx; // mutex for critical section
 // map<int, vector<int>> map<int, vector<int>>
 //  ConcurrentIndexRange &range
-vector<tuple<int, int, long long, long long>> optimiseSelectionCostKernel(cv::Mat *_data, vector<int> &threadTasks, vector<vector<int>> &clusters, vector<tuple<int, int>> &tasks) // vector<tuple<int, int, long long, long long>> &resultSet
+vector<tuple<int, int, long long, long long>> optimiseSelectionCostKernel(cv::Mat *_data, vector<int> threadTasks, vector<vector<int>> &clusters, vector<tuple<int, int>> &tasks) // vector<tuple<int, int, long long, long long>> &resultSet
 {
     auto data = *_data;
     using std::chrono::duration;
@@ -76,13 +76,13 @@ vector<tuple<int, int, long long, long long>> optimiseSelectionCostKernel(cv::Ma
             clusterExists[clusterId] = true;
         }
 
-        if (j % 97 == 0)
+        /*if (j % 97 == 0)
         {
             auto t2 = high_resolution_clock::now();
             auto ms_int = duration_cast<milliseconds>(t2 - t1);
             cout << "thread " << this_thread::get_id() << " | local idx" << j << " | global idx " << *it << " | pc " << ((float(j)) * 100) / (taskMax) << endl;
             std::cout << ms_int.count() << "ms\n";
-        }
+        }*/
 
         // cout << " done task " << i << endl;
         j++;
@@ -96,6 +96,8 @@ vector<tuple<int, int, long long, long long>> optimiseSelectionCostKernel(cv::Ma
         // keys.push_back(it->first);
         auto key = it->first;
         auto value = results[it->first];
+        // key, get<0>(value), get<1>(value), get<2>(value)
+        cout << "push back optimise " << key << ", " << key << get<0>(value) << ", " << get<1>(value) << ", " << get<2>(value) << endl;
 
         localResultSet.push_back(make_tuple(key, get<0>(value), get<1>(value), get<2>(value)));
     }
@@ -157,7 +159,7 @@ pair<long long, map<int, vector<int>>> optimiseCentroidSelectionAndComputeCluste
         cout << "booting thread " << ix << endl;
         auto future = std::async(std::launch::async, [&]()
                                  { return optimiseSelectionCostKernel(_data, distributedTasks[it->first], clusters, tasks); });
-        futures.push_back(std::move(future));
+        futures.emplace_back(std::move(future));
 
         // threads[ix] = thread{optimiseSelectionCostKernel, _data, ref(distributedTasks[it->first]), ref(clusters), ref(tasks), ref(resultSet)};
         ix++;
@@ -173,43 +175,85 @@ pair<long long, map<int, vector<int>>> optimiseCentroidSelectionAndComputeCluste
     {
         th.join();
     }*/
-    for (int i = 0; i < futures.size(); i++)
+    /*for (int i = 0; i < futures.size(); i++)
     {
         futures[i].wait();
-    }
-
+    }*/
 
     map<int, bool> resultHasCluster = {};
     map<int, tuple<int, long long, long long>> resultSetAgg = {}; // clusterId => bestCentroidId, bestCentroidCost, totalCost
 
+    cout << "here 1" << endl;
+
     for (int i = 0; i < futures.size(); i++)
     {
-        auto data = futures[i].get();
+        cout << "here 2" << endl;
+        std::vector<std::tuple<int, int, long long, long long>> data;
+        try
+        {
+            cout << "here 3"  << endl;
+            cout << futures[i].valid() << endl;
+            // crashed here
+            data = futures[i].get();
+        }
+        catch (const std::future_error &e)
+        {
+            cout << "here 4" << endl;
+
+            const error_code eCode = e.code();
+            char *sValue = (char *)e.what();
+            std::cout << "Caught a future_error with code " << eCode.message()
+                      << " - what" << sValue << endl;
+            exit(1);
+        }
+        cout << "here 5" << endl;
+
         for (int i = 0; i < data.size(); i++)
         {
+            cout << "iiii iii i" << i << endl;
+            cout << "here 6y" << endl;
+            // crashed here
             auto clusterId = get<0>(data[i]);
+            cout << "here 7" << endl;
+            // crashed here
             auto bestCentroidId = get<1>(data[i]);
+            cout << "here 8" << endl;
+            // crashed here
             auto bestCentroidCost = get<2>(data[i]);
+            cout << "here 9" << endl;
             auto totalCost = get<3>(data[i]);
+            cout << "here 10" << endl;
+            // crashed here
             if (resultHasCluster[clusterId] == true) // resultSetAgg.count(clusterId) > 0
             {
+                cout << "here 11" << endl;
+                            // crashed here
                 int bestGlobalCentroidCost = get<1>(resultSetAgg[clusterId]);
                 int bestGlobalCentroidIndex = get<0>(resultSetAgg[clusterId]);
                 long long newGlobalTotal = get<2>(resultSetAgg[clusterId]) + totalCost;
+                cout << "here 14" << endl;
 
                 if (bestCentroidCost < bestGlobalCentroidCost)
                 {
                     bestGlobalCentroidCost = bestCentroidCost;
                     bestGlobalCentroidIndex = bestCentroidId;
                 }
+                cout << "here 15" << endl;
+
                 resultSetAgg[clusterId] = make_tuple(bestGlobalCentroidIndex, bestGlobalCentroidCost, newGlobalTotal);
             }
             else
             {
+                cout << "here 12" << endl;
+                // crashed here
                 resultSetAgg[clusterId] = make_tuple(bestCentroidId, bestCentroidCost, totalCost);
+                cout << "here 13" << endl;
+
                 resultHasCluster[clusterId] = true;
             }
         }
+        cout << "here 6x" << endl;
+
         // resultSet.insert(resultSet.end(), data.begin(), data.end());
     }
 

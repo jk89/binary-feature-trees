@@ -7,9 +7,9 @@ using namespace std;
 
 std::mutex clusterMtx; // mutex for critical section
 
-vector<pair<int, int>> clusterKernel(vector<int> *_dataIndices, cv::Mat *_data, vector<int> &range, vector<int> &centroidIndices, map<int, bool> &isCentroid) // map<int, vector<int>> &clusterMembership  vector<pair<int, int>> &threadResults
+vector<pair<int, int>> clusterKernel(vector<int> *_dataIndices, cv::Mat *_data, vector<int> range, vector<int> centroidIndices, map<int, bool> isCentroid) // map<int, vector<int>> &clusterMembership  vector<pair<int, int>> &threadResults
 {
-    cout << "here   " << endl;
+    // cout << "here   " << endl;
     auto dataIndices = *_dataIndices;
     auto data = *_data;
     // cout << "ok" << endl;
@@ -18,19 +18,19 @@ vector<pair<int, int>> clusterKernel(vector<int> *_dataIndices, cv::Mat *_data, 
     // iterate data within range
     for (int x = 0; x < range.size(); x++)
     {
-        cout << "here  2  " << endl;
+        // cout << "here  2  " << endl;
         int i = range[x];
-        cout << "here  3 " << endl;
+        // cout << "here  3 " << endl;
         bool isDataPointACentroid = isCentroid[i];
-        cout << "here 4" << endl;
+        // cout << "here 4" << endl;
         if (isDataPointACentroid == true)
             continue; // skip calculating optimal membership for centroids as they are not members of any cluster
-        cout << "here 5" << endl;
+        // cout << "here 5" << endl;
 
         // convert range index to data index
         int dataIndex = dataIndices[i];
-        cout << "here 6" << endl;
-// crashed here
+        cout << "here 6z" << endl;
+// crashed here // what about using a shared pointer?
         const cv::Mat currentFeatureData = data.row(dataIndex);
 
         cout << "here 7" << endl;
@@ -55,7 +55,7 @@ vector<pair<int, int>> clusterKernel(vector<int> *_dataIndices, cv::Mat *_data, 
         }
 
         // clusterMembership[nearestCentroidIndex].push_back(dataIndex);
-        // cout << "di " << dataIndex << "ci " << nearestCentroidIndex << endl;
+        cout << "di " << dataIndex << "ci " << nearestCentroidIndex << endl;
         localThreadResults.push_back(make_pair(nearestCentroidIndex, dataIndex));
     }
     return localThreadResults;
@@ -125,7 +125,8 @@ map<int, vector<int>> optimiseClusterMembership(vector<int> *_dataIndices, cv::M
         */
         auto future = std::async(std::launch::async, [&]()
                                  { return clusterKernel(_dataIndices, _data, distributedTasks[i], centroidSeedIndices, isCentroid); });
-        futures.push_back(std::move(future));
+        futures.emplace_back(std::move(future));
+        // futures.push_back(std::move(future));
         /*cout << "ranges i start" << ranges[i].start << endl;
         cout << "ranges i end" << ranges[i].end << endl;
         for (int c = 0; c < centroidSeedIndices.size(); c++)
@@ -139,19 +140,31 @@ map<int, vector<int>> optimiseClusterMembership(vector<int> *_dataIndices, cv::M
 
     cout << " about to join " << endl;
 
-    for (int i = 0; i < futures.size(); i++)
+    /*for (int i = 0; i < futures.size(); i++)
     {
         futures[i].wait();
     }
-
+*/
     for (int i = 0; i < futures.size(); i++)
     {
+        cout << "0here 0" << endl;
+        cout << futures[i].valid() << endl;
+        // crashed here
         auto data = futures[i].get();
+                cout << "0here 1" << endl;
+
         for (int i = 0; i < data.size(); i++)
         {
+            cout << "0here 2+" << i << endl;
+            // crashed here with i=0,1
             // cout << " pair results, data index: " << threadResults[i].second << " centroid index " << threadResults[i].first << endl;
+            // what about using emplace with degenerate same key map entries
+            // https://stackoverflow.com/questions/4303513/push-back-vs-emplace-back
+            // what if first is -1 from above
             clusterMembership[data[i].first].push_back(data[i].second);
         }
+                                    cout << "0here END OF FUTURE" << endl;
+
         // threadResults.insert(threadResults.end(), data.begin(), data.end());
     }
 

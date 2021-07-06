@@ -427,7 +427,7 @@ void trainModel(string modelName)
     //json model = read_jsonfile(vocTree);
             vector<int> indices = getRange(data.rows);
 
-            TrainingNode rootNode = TrainingNode(vocTree, &data, indices, {}, {0}, 8, 11, nullptr, nullptr);
+            TrainingNode rootNode = TrainingNode(vocTree, &data, indices, {}, {0}, 8, 4, nullptr, nullptr);
     //TrainingNode rootNode = deserialise(vocTree, &data, model, nullptr, nullptr);
     rootNode.process();
     rootNode.save();
