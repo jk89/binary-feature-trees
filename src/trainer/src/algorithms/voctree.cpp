@@ -75,11 +75,16 @@ public:
                 cout << " | "  << cost << " | " << this->currentPermutationCost << endl;
                 this->currentPermutationCost = cost;
                 this->clusterMembers = clusterMembership;
+                if (this->currentPermutationCost != cost) {
+                    cout << "wtf man";
+                    exit(2);
+                }
                 centroids = getClusterKeys(this->clusterMembers);
                 this->centroids = centroids;
             }
             else
             {
+                cout << "cost not improving (cost,best):(" << cost << "|" << this->currentPermutationCost << endl;
                 escape = true;
             }
             iteration++;
@@ -95,8 +100,10 @@ public:
         {
             auto centroid_id = this->centroids[i];
             auto level_data_indices = this->clusterMembers[centroid_id];
-            auto id = this->id;
-            vector<int> newId = this->id;
+            vector<int> newId = {};
+            for (int k = 0; k < this->id.size(); k++) {
+                newId.push_back(this->id[k]);
+            }
             newId.push_back(i);
             auto child = TrainingNode(this->root->vocTreeFile, this->data, level_data_indices, newId, {0}, this->k, this->processor_count, this, this->root);
             this->children.push_back(child);
