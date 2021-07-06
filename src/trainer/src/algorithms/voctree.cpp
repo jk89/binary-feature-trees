@@ -89,7 +89,7 @@ public:
     TrainingNode *root;
     map<int, vector<int>> clusterMembers = {};
     int k = 0;
-    cv::Mat *data;
+    std::shared_ptr<FeatureMatrix> data;
     vector<int> level_data_indices = {};
     vector<TrainingNode> children = {};
     string vocTreeFile;
@@ -244,7 +244,7 @@ level_data_indices.size() <= k * 2
         return jnode;
     }
     Node toNode() {}
-    TrainingNode(string modelName, cv::Mat *data, vector<int> level_data_indices, vector<int> id, vector<int> centroids, int k, int processor_count, TrainingNode *parent, TrainingNode *root) : Node(id, centroids, parent, root)
+    TrainingNode(string modelName, std::shared_ptr<FeatureMatrix> data, vector<int> level_data_indices, vector<int> id, vector<int> centroids, int k, int processor_count, TrainingNode *parent, TrainingNode *root) : Node(id, centroids, parent, root)
     {
         this->data = data;
         this->level_data_indices = level_data_indices;
@@ -276,7 +276,7 @@ level_data_indices.size() <= k * 2
     }*/
 };
 
-TrainingNode deserialise(string modelName, cv::Mat *data, json model, TrainingNode *parent, TrainingNode *root)
+TrainingNode deserialise(string modelName, std::shared_ptr<FeatureMatrix> data, json model, TrainingNode *parent, TrainingNode *root)
 {
     /*
 ns::person p {
@@ -425,13 +425,24 @@ void trainModel(string modelName)
     }*/
 
     //json model = read_jsonfile(vocTree);
-            vector<int> indices = getRange(data.rows);
+    vector<int> indices = getRange(data.rows);
+    auto dataVec = matToVector(data);
+    // std::shared_ptr<std::vector<std::vector<int>> sharedData; // <std::vector<std::vector<int>>
+    // std::shared_ptr<std::vector<std::vector<int>> sPtr;
+    auto mSharedPtr = std::make_shared<FeatureMatrix>(dataVec);
+    // kmedoids(mSharedPtr, &indices, 8, 1, {0});
+    // auto mSharedPtr = std::make_shared<std::vector<uint8_t> >(/* vector constructor arguments*/);
 
-            TrainingNode rootNode = TrainingNode(vocTree, &data, indices, {}, {0}, 8, 4, nullptr, nullptr);
+    // concurrentTester(&indices, 1);
+    //clusterMembershipPrinter(kmedoids(mSharedPtr, &indices, 8, 1, {0}));
+    TrainingNode rootNode = TrainingNode(vocTree, mSharedPtr, indices, {}, {0}, 8, 12, nullptr, nullptr);
+    rootNode.process();
+    rootNode.save();
+    /*       TrainingNode rootNode = TrainingNode(vocTree, mSharedPtr, indices, {}, {0}, 8, 4, nullptr, nullptr);
     //TrainingNode rootNode = deserialise(vocTree, &data, model, nullptr, nullptr);
     rootNode.process();
     rootNode.save();
-
+*/
     // modelName
     // vector<int> indices = getRange(data.rows);
     // TrainingNode rootNode = TrainingNode(vocTree, &data, indices, {}, {0}, 8, 12, nullptr, nullptr);

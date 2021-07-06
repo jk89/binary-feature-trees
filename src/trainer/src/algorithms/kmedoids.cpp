@@ -2,12 +2,10 @@
 #include <opencv2/core/mat.hpp>
 using namespace std;
 
-map<int, vector<int>> kmedoids(cv::Mat *_data, vector<int> *_indices, int k, int processor_count, vector<int> seeds) {
+map<int, vector<int>> kmedoids(std::shared_ptr<FeatureMatrix> _data, vector<int> *_indices, int k, int processor_count, vector<int> seeds) {
     auto data = *_data;
     auto indices = *_indices;
-    cout << "details of m rows" << data.rows << " cols " << data.cols << " tyoe " << data.type() << endl;
-    cout << "first row: " << cv::format(data.row(0), cv::Formatter::FMT_PYTHON) << endl;
-    cout << "second row: " << cv::format(data.row(1), cv::Formatter::FMT_PYTHON) << endl;
+    cout << "details of m rows" << data.size() << " cols " << data[0].size() << " tyoe " << endl; // << data.type()
     cout << "Seeding clusters:" << endl;
     vector<int> centroids = seedCentroids(_data, k, seeds);
     cout << "Centroids: " << endl;
@@ -50,7 +48,9 @@ map<int, vector<int>> kmedoids(cv::Mat *_data, vector<int> *_indices, int k, int
         }
         iteration++;
     }
+
+    centroids = getClusterKeys(bestMembership);
+    centroidPrinter(centroids);
+
     return bestMembership;
 }
-
-    

@@ -7,7 +7,7 @@ using namespace std;
 std::mutex optimiseSelectionCostMtx; // mutex for critical section
 // map<int, vector<int>> map<int, vector<int>>
 //  ConcurrentIndexRange &range
-vector<tuple<int, int, long long, long long>> optimiseSelectionCostKernel(cv::Mat *_data, vector<int> threadTasks, vector<vector<int>> &clusters, vector<tuple<int, int>> &tasks) // vector<tuple<int, int, long long, long long>> &resultSet
+vector<tuple<int, int, long long, long long>> optimiseSelectionCostKernel(std::shared_ptr<FeatureMatrix> _data, vector<int> threadTasks, vector<vector<int>> &clusters, vector<tuple<int, int>> &tasks) // vector<tuple<int, int, long long, long long>> &resultSet
 {
     auto data = *_data;
     using std::chrono::duration;
@@ -36,18 +36,21 @@ vector<tuple<int, int, long long, long long>> optimiseSelectionCostKernel(cv::Ma
         // remove pointId from cluster
         cluster.erase(cluster.begin() + pointId);
 
-        auto candidateData = data.row(pointGlobalIndex);
+        auto candidateData = data[pointGlobalIndex];
 
         // long long sumCost = 0;
         // long long bestCost = long long_MAX;
         // int bestCentroidIndex = - 1;
+        // cout << "CCCLLLUSTER SSSIZE" << cluster.size() << endl;
 
         long long cost = 0;
         for (int k = 0; k < cluster.size(); k++)
         {
-            auto dataData = data.row(cluster[k]);
+            auto dataData = data[cluster[k]];
             int distance = hammingDistance(candidateData, dataData);
+            // cout << "DISTANCE" << distance << endl;
             cost += distance;
+            // cout << "cost" <<  cost << endl;
         }
 
         if (clusterExists[clusterId]) // results.find(clusterId) != results.end() // results.find(clusterId) != results.end() // clusterExists[clusterId]
@@ -91,7 +94,7 @@ vector<tuple<int, int, long long, long long>> optimiseSelectionCostKernel(cv::Ma
 
     vector<tuple<int, int, long long, long long>> localResultSet = {}; // clusterId, bestCentroidId, bestCentroidCost, totalCost
 
-    for (map<int, tuple<int, long long, long long>>::iterator it = results.begin(); it != results.end(); ++it)
+    for (map<int, tuple<int, long long, long long>>::iterator it = results.begin(); it != results.end(); it++)
     {
         // keys.push_back(it->first);
         auto key = it->first;
@@ -117,7 +120,7 @@ vector<tuple<int, int, long long, long long>> optimiseSelectionCostKernel(cv::Ma
     }*/
 }
 
-pair<long long, map<int, vector<int>>> optimiseCentroidSelectionAndComputeClusterCost(cv::Mat *_data, map<int, vector<int>> &clusterMembership, int processor_count)
+pair<long long, map<int, vector<int>>> optimiseCentroidSelectionAndComputeClusterCost(std::shared_ptr<FeatureMatrix> _data, map<int, vector<int>> &clusterMembership, int processor_count)
 {
     cout << "ROUTINE: selection" << endl;
 
@@ -157,8 +160,9 @@ pair<long long, map<int, vector<int>>> optimiseCentroidSelectionAndComputeCluste
     for (map<int, vector<int>>::iterator it = distributedTasks.begin(); it != distributedTasks.end(); ++it)
     {
         cout << "booting thread " << ix << endl;
-        auto future = std::async(std::launch::async, [&]()
-                                 { return optimiseSelectionCostKernel(_data, distributedTasks[it->first], clusters, tasks); });
+        auto task = distributedTasks[it->first];
+        auto future = std::async(std::launch::async, [&, task = std::move(task)]()
+                                 { return optimiseSelectionCostKernel(_data, task, clusters, tasks); });
         futures.emplace_back(std::move(future));
 
         // threads[ix] = thread{optimiseSelectionCostKernel, _data, ref(distributedTasks[it->first]), ref(clusters), ref(tasks), ref(resultSet)};
@@ -194,6 +198,8 @@ pair<long long, map<int, vector<int>>> optimiseCentroidSelectionAndComputeCluste
             cout << "here 3"  << endl;
             cout << futures[i].valid() << endl;
             // crashed here
+
+            cout << "here 3.1"  << endl;
             data = futures[i].get();
         }
         catch (const std::future_error &e)

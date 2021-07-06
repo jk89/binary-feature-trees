@@ -2,7 +2,7 @@
 #include <opencv2/core/mat.hpp>
 using namespace std;
 
-int seedKernel(cv::Mat *_data, int currentCentroidIndex, vector<int> centroids, int k) // data, dataIdValue, centroids, k, metric
+int seedKernel(std::shared_ptr<FeatureMatrix> _data, int currentCentroidIndex, vector<int> centroids, int k) // data, dataIdValue, centroids, k, metric
 {
         cout << "seed kernel " << currentCentroidIndex << endl;
 
@@ -10,18 +10,18 @@ int seedKernel(cv::Mat *_data, int currentCentroidIndex, vector<int> centroids, 
     int maxDistance = 0;
     int maxIndex = -1;
     // for the whole dataset of features
-    for (int r = 0; r < data.rows; r++)
+    for (int r = 0; r < data.size(); r++)
     {
         // cout << "  r " << r << endl;
         // extract feature from row index
-        cv::Mat currentDatasetFeature = data.row(r);
+        auto currentDatasetFeature = data[r];
         int minDistance = INT_MAX;
         // for each already selected centroid
         for (int c = 0; c < centroids.size(); c++)
         {
             // cout << " c " << c << endl;
             int currentCentroidDataSetIndex = centroids[c];
-            cv::Mat currentCentroidFeature = data.row(currentCentroidDataSetIndex);
+            auto currentCentroidFeature = data[currentCentroidDataSetIndex];
             // currentDatasetFeature
             const int distance = hammingDistance(currentDatasetFeature, currentCentroidFeature);
             // min minDistance
@@ -36,13 +36,13 @@ int seedKernel(cv::Mat *_data, int currentCentroidIndex, vector<int> centroids, 
     return maxIndex; // return the best centroid
 }
 
-vector<int> seedCentroids(cv::Mat *_data, int _k, vector<int> seeds) // data, k, metric
+vector<int> seedCentroids(std::shared_ptr<FeatureMatrix> _data, int _k, vector<int> seeds) // data, k, metric
 {
     cout << "ROUTINE: seed" << endl;
     auto data = *_data;
 
     // largest index
-    const int dataLength = data.rows;
+    const int dataLength = data.size();
     vector<int> centroids = seeds;
 
     int k = _k - seeds.size();

@@ -6,12 +6,19 @@
 using namespace std;
 
 std::mutex clusterMtx; // mutex for critical section
+//                                  { return clusterKernel(_dataIndices, _data, distributedTasks[i], centroidSeedIndices, isCentroid); });
 
-vector<pair<int, int>> clusterKernel(vector<int> *_dataIndices, cv::Mat *_data, vector<int> range, vector<int> centroidIndices, map<int, bool> isCentroid) // map<int, vector<int>> &clusterMembership  vector<pair<int, int>> &threadResults
+vector<pair<int, int>> clusterKernel(vector<int> *_dataIndices, std::shared_ptr<FeatureMatrix> _data, vector<int> range, vector<int> centroidIndices, map<int, bool> isCentroid) // map<int, vector<int>> &clusterMembership  vector<pair<int, int>> &threadResults
 {
     // cout << "here   " << endl;
     auto dataIndices = *_dataIndices;
     auto data = *_data;
+    // auto range = *_range;
+
+    cout << "inclusterkernel " << dataIndices.size() << ", " << data.size() << endl;
+    cout << "range " << range.size() << endl;
+    cout << "sending params3 " << endl;
+    centroidPrinter(range);
     // cout << "ok" << endl;
     vector<pair<int, int>> localThreadResults;
 
@@ -30,8 +37,8 @@ vector<pair<int, int>> clusterKernel(vector<int> *_dataIndices, cv::Mat *_data, 
         // convert range index to data index
         int dataIndex = dataIndices[i];
         cout << "here 6z" << endl;
-// crashed here // what about using a shared pointer?
-        const cv::Mat currentFeatureData = data.row(dataIndex);
+        // crashed here // what about using a shared pointer?
+        auto currentFeatureData = data[(dataIndex)]; // row
 
         cout << "here 7" << endl;
 
@@ -42,7 +49,7 @@ vector<pair<int, int>> clusterKernel(vector<int> *_dataIndices, cv::Mat *_data, 
         for (int c = 0; c < centroidIndices.size(); c++)
         {
             const int centroidIndex = centroidIndices[c];
-            cv::Mat currentCentroidData = data.row(centroidIndex);
+            auto currentCentroidData = data[centroidIndex]; // row
 
             // calculate pairwise hamming distance
             long long distance = hammingDistance(currentCentroidData, currentFeatureData);
@@ -52,6 +59,12 @@ vector<pair<int, int>> clusterKernel(vector<int> *_dataIndices, cv::Mat *_data, 
                 nearestCentroidIndex = centroidIndex;
                 nearestDistance = distance;
             }
+        }
+
+        if (nearestCentroidIndex == -1)
+        {
+            cout << "bad math" << endl;
+            // exit(1);
         }
 
         // clusterMembership[nearestCentroidIndex].push_back(dataIndex);
@@ -67,7 +80,7 @@ vector<pair<int, int>> clusterKernel(vector<int> *_dataIndices, cv::Mat *_data, 
 
 //     auto distributedTasks = distributeTasks(tasks, processor_count);
 
-map<int, vector<int>> optimiseClusterMembership(vector<int> *_dataIndices, cv::Mat *_data, vector<int> &centroidSeedIndices, int processor_count)
+map<int, vector<int>> optimiseClusterMembership(vector<int> *_dataIndices, std::shared_ptr<FeatureMatrix> _data, vector<int> &centroidSeedIndices, int processor_count)
 { // data, n=4, metric=hammingVector, intitalClusterIndices=None
     cout << "ROUTINE: cluster" << endl;
     auto dataIndices = *_dataIndices;
@@ -82,9 +95,7 @@ map<int, vector<int>> optimiseClusterMembership(vector<int> *_dataIndices, cv::M
     const int threadPool = processor_count;
 
     auto range = getRange(dataRowCount);
-    auto distributedTasks = distributeTasks(range, threadPool);
-
-    vector<ConcurrentIndexRange> ranges = rangeCalculator(dataRowCount, threadPool);
+    auto distributedTasks = distributeTasksVec(range, threadPool);
 
     // centroidMembership
     cout << " about to init clusterMember ship is centroid store" << endl;
@@ -123,8 +134,18 @@ map<int, vector<int>> optimiseClusterMembership(vector<int> *_dataIndices, cv::M
         /*
 
         */
-        auto future = std::async(std::launch::async, [&]()
-                                 { return clusterKernel(_dataIndices, _data, distributedTasks[i], centroidSeedIndices, isCentroid); });
+        // const std::vector<int>& v2 = v1;
+        vector<int> thisTasks = distributedTasks[i];
+
+        cout << "sending params1 " << endl;
+        centroidPrinter(thisTasks);
+
+        auto future = std::async(std::launch::async, [&_dataIndices, &_data, &centroidSeedIndices, &isCentroid, thisTasks = std::move(thisTasks)]()
+                                 {
+                                     cout << "sending params2 " << endl;
+                                     centroidPrinter(thisTasks);
+                                     return clusterKernel(_dataIndices, _data, thisTasks, centroidSeedIndices, isCentroid);
+                                 });
         futures.emplace_back(std::move(future));
         // futures.push_back(std::move(future));
         /*cout << "ranges i start" << ranges[i].start << endl;
@@ -151,7 +172,7 @@ map<int, vector<int>> optimiseClusterMembership(vector<int> *_dataIndices, cv::M
         cout << futures[i].valid() << endl;
         // crashed here
         auto data = futures[i].get();
-                cout << "0here 1" << endl;
+        cout << "0here 1" << endl;
 
         for (int i = 0; i < data.size(); i++)
         {
@@ -163,7 +184,7 @@ map<int, vector<int>> optimiseClusterMembership(vector<int> *_dataIndices, cv::M
             // what if first is -1 from above
             clusterMembership[data[i].first].push_back(data[i].second);
         }
-                                    cout << "0here END OF FUTURE" << endl;
+        cout << "0here END OF FUTURE" << endl;
 
         // threadResults.insert(threadResults.end(), data.begin(), data.end());
     }

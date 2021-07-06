@@ -18,6 +18,26 @@ myType getKey (myType a) {
 }
 */
 
+vector<vector<uint8_t>> matToVector(cv::Mat mat)
+{
+    vector<vector<uint8_t>> out = {};
+    //pass data to 2D array
+
+    for (int i = 0; i < mat.rows; ++i)
+    {
+        vector<uint8_t> row = {};
+        for (int j = 0; j < mat.cols; ++j)
+        {
+            // cout << int(mat.at<uint8_t>(i, j)) << endl;
+            row.push_back(mat.at<uint8_t>(i, j));
+        }
+        out.push_back(row);
+    }
+        
+
+    return out;
+}
+
 map<int, vector<int>> distributeTasks(vector<tuple<int, int>> &tasks, int partitions)
 {
     map<int, vector<int>> taskDistibution = {};
@@ -88,6 +108,28 @@ map<int, vector<int>> distributeTasks(vector<int> &tasks, int partitions)
     return taskDistibution;
 }
 
+vector<vector<int>> distributeTasksVec(vector<int> &tasks, int partitions)
+{
+    vector<vector<int>> taskDistibution = {};
+    for (int i = 0; i < partitions; i++) {
+        taskDistibution.push_back({});
+    }
+    // map<int, bool> partitionExists = {};
+    int currentPartition = 0;
+    for (int i = 0; i < tasks.size(); i++)
+    {
+        taskDistibution[currentPartition].push_back(i);
+
+        currentPartition++;
+        if (currentPartition % partitions == 0)
+        {
+            currentPartition = 0;
+        }
+    }
+
+    return taskDistibution;
+}
+
 /**
  * \brief   Return the filenames of all files that have the specified extension
  *          in the specified directory and all subdirectories.
@@ -149,6 +191,43 @@ int hammingDistance(cv::Mat v1, cv::Mat v2)
     int distance = cv::norm(v1, v2, cv::NORM_HAMMING);
     return distance;
 }
+void centroidPrinter(vector<int> centroids)
+{
+    /*for (auto i = centroids.begin(); i != centroids.end(); ++i)
+    {
+        std::cout << *i << ", ";
+    }*/
+    for (int i = 0; i < centroids.size(); i++) {
+        cout << centroids[i] << ",";
+    }
+    cout << endl;
+}
+
+void centroidPrinter(vector<uint8_t> centroids)
+{
+    for (auto i = centroids.begin(); i != centroids.end(); ++i)
+    {
+        std::cout << int(*i) << ", ";
+    }
+}
+int hammingDistance(vector<uint8_t> v1, vector<uint8_t> v2)
+{
+    /*int distance = cv::norm(v1, v2, cv::NORM_HAMMING);
+    return distance;*/
+    int sum = 0;
+    for (int i = 0; i < v1.size(); i++) {
+        sum += v1[i] ^ v2[i];
+    }
+    if (sum < 0) {
+        // print
+        cout << "-------------------" << endl;
+        centroidPrinter(v1);
+        cout << "------------------" << endl;
+        centroidPrinter(v2);
+        cout << "+++++++++++++++++++++++++++++++++++" << endl;
+    }
+    return sum;
+}
 
 vector<ConcurrentIndexRange> rangeCalculator(int count, int partitions)
 {
@@ -197,13 +276,7 @@ vector<int> getClusterKeys(map<int, vector<int>> m)
     return keys;
 }
 
-void centroidPrinter(vector<int> centroids)
-{
-    for (auto i = centroids.begin(); i != centroids.end(); ++i)
-    {
-        std::cout << *i << ", ";
-    }
-}
+
 /*
 json vectorIntArrayTojsonArray(vector<int> input) {
     json output;
@@ -211,7 +284,6 @@ json vectorIntArrayTojsonArray(vector<int> input) {
         output.push_back()
     }
 }*/
-
 
 void clusterMembershipPrinter(map<int, vector<int>> clusterMembership)
 {
@@ -331,11 +403,15 @@ vector<int> getRange(int range)
     return indices;
 }
 
-bool file_exists (const std::string& name) {
-    if (FILE *file = fopen(name.c_str(), "r")) {
+bool file_exists(const std::string &name)
+{
+    if (FILE *file = fopen(name.c_str(), "r"))
+    {
         fclose(file);
         return true;
-    } else {
+    }
+    else
+    {
         return false;
-    }   
+    }
 }

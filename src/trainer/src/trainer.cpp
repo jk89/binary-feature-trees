@@ -12,6 +12,7 @@
 #include <chrono>
 #include "models.cpp"
 #include "utils.cpp"
+#include "algorithms/futuretesting.cpp"
 #include "algorithms/kpp.cpp"
 #include "algorithms/cluster.cpp"
 #include "algorithms/optimise.cpp"

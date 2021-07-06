@@ -51,3 +51,5 @@ struct compareFeatureVecs
         return total > 0;
     }
 };
+
+typedef std::vector<vector<uint8_t>> FeatureMatrix;
