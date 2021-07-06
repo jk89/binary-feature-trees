@@ -174,16 +174,16 @@ void centroidPrinter(vector<int> centroids)
 {
     for (auto i = centroids.begin(); i != centroids.end(); ++i)
     {
-        std::cout << *i << ", ";
+        std::cout << *i << ",";
     }
-    cout << endl;
+    // cout << endl;
 }
 
 void centroidPrinter(vector<uint8_t> centroids)
 {
     for (auto i = centroids.begin(); i != centroids.end(); ++i)
     {
-        std::cout << int(*i) << ", ";
+        std::cout << int(*i) << ",";
     }
 }
 int hammingDistance(vector<uint8_t> v1, vector<uint8_t> v2)

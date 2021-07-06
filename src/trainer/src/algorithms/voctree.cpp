@@ -70,7 +70,9 @@ public:
             clusterMembership = optimiseClusterMembership(&(this->level_data_indices), this->data, centroids, processor_count);
             if (cost < this->currentPermutationCost)
             {
-                cout << "Cost improving (currentCost, oldCost)" << cost << " , " << this->currentPermutationCost << endl;
+                cout << "Cost improving [id | currentCost | oldCost]:[";
+                centroidPrinter(this->id);
+                cout << " | "  << cost << " | " << this->currentPermutationCost << endl;
                 this->currentPermutationCost = cost;
                 this->clusterMembers = clusterMembership;
                 centroids = getClusterKeys(this->clusterMembers);
