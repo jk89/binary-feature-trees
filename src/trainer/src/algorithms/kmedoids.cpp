@@ -9,7 +9,7 @@ map<int, vector<int>> kmedoids(std::shared_ptr<FeatureMatrix> _data, vector<int>
 
     // begin fitting
     long long bestCost = LLONG_MAX;
-    auto bestMembership = optimiseClusterMembership(_indices, _data, centroids, processor_count);
+    auto bestMembership = optimiseClusterMembership(indices, _data, centroids, processor_count);
     bool escape = false;
 
     int iteration = 0;
@@ -19,7 +19,7 @@ map<int, vector<int>> kmedoids(std::shared_ptr<FeatureMatrix> _data, vector<int>
         auto cost = optimalSelectionResults.first;
         auto clusterMembership = optimalSelectionResults.second;
         centroids = getClusterKeys(clusterMembership);
-        clusterMembership = optimiseClusterMembership(_indices, _data, centroids, processor_count);
+        clusterMembership = optimiseClusterMembership(indices, _data, centroids, processor_count);
         if (cost < bestCost)
         {
             cout << "Cost improving (currentCost, oldCost)" << cost << " , " << bestCost << endl;

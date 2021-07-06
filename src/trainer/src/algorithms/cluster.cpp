@@ -7,9 +7,9 @@ using namespace std;
 
 std::mutex clusterMtx;
 
-vector<pair<int, int>> clusterKernel(vector<int> *_dataIndices, std::shared_ptr<FeatureMatrix> _data, vector<int> range, vector<int> centroidIndices, map<int, bool> isCentroid)
+vector<pair<int, int>> clusterKernel(vector<int> dataIndices, std::shared_ptr<FeatureMatrix> _data, vector<int> range, vector<int> centroidIndices, map<int, bool> isCentroid)
 {
-    auto dataIndices = *_dataIndices;
+    // auto dataIndices = *_dataIndices;
     auto data = *_data;
     vector<pair<int, int>> localThreadResults;
 
@@ -55,9 +55,9 @@ vector<pair<int, int>> clusterKernel(vector<int> *_dataIndices, std::shared_ptr<
 }
 
 
-map<int, vector<int>> optimiseClusterMembership(vector<int> *_dataIndices, std::shared_ptr<FeatureMatrix> _data, vector<int> &centroidSeedIndices, int processor_count)
+map<int, vector<int>> optimiseClusterMembership(vector<int> dataIndices, std::shared_ptr<FeatureMatrix> _data, vector<int> centroidSeedIndices, int processor_count)
 {
-    auto dataIndices = *_dataIndices;
+    // auto dataIndices = *_dataIndices;
     auto data = *_data;
     map<int, bool> isCentroid = {};
     map<int, vector<int>> clusterMembership = {};
@@ -82,9 +82,11 @@ map<int, vector<int>> optimiseClusterMembership(vector<int> *_dataIndices, std::
     for (int i = 0; i < threadPool; i++)
     {
         vector<int> threadTask = distributedTasks[i];
-        auto future = std::async(std::launch::async, [&_dataIndices, &_data, &centroidSeedIndices, &isCentroid, threadTask = std::move(threadTask)]()
+        auto indexClone = dataIndices;
+        auto centroidSeedIndicesClone = centroidSeedIndices;
+        auto future = std::async(std::launch::async, [_data, &isCentroid, threadTask = std::move(threadTask), indexClone = std::move(indexClone), centroidSeedIndices = std::move(centroidSeedIndicesClone)]()
                                  {
-                                     return clusterKernel(_dataIndices, _data, threadTask, centroidSeedIndices, isCentroid);
+                                     return clusterKernel(indexClone, _data, threadTask, centroidSeedIndices, isCentroid);
                                  });
         futures.emplace_back(std::move(future));
     }

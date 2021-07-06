@@ -32,6 +32,7 @@ int seedKernel(std::shared_ptr<FeatureMatrix> _data, int currentCentroidIndex, v
 
 vector<int> seedCentroids(std::shared_ptr<FeatureMatrix> _data, int _k, vector<int> seeds) // data, k, metric
 {
+    // this completely ignores the dataIndicies! FIXME
     auto data = *_data;
 
     // largest index

@@ -26,7 +26,6 @@ public:
     json serialise() {}
 };
 
-
 class TrainingNode : public Node
 {
 public:
@@ -55,11 +54,12 @@ public:
             this->centroids = seedCentroids(this->data, this->k, this->centroids);
         }
 
-        this->clusterMembers = optimiseClusterMembership(&(this->level_data_indices), this->data, centroids, processor_count);
+        this->clusterMembers = optimiseClusterMembership((this->level_data_indices), this->data, this->centroids, processor_count);
         this->centroids = getClusterKeys(this->clusterMembers);
 
         bool escape = false;
         int iteration = 0;
+        // best cluster memebership up here
         while (escape == false)
         {
             auto optimalSelectionResults = optimiseCentroidSelectionAndComputeClusterCost(this->data, this->clusterMembers, processor_count);
@@ -67,15 +67,18 @@ public:
             auto clusterMembership = optimalSelectionResults.second;
             auto centroids = getClusterKeys(clusterMembership);
 
-            clusterMembership = optimiseClusterMembership(&(this->level_data_indices), this->data, centroids, processor_count);
+            clusterMembership = optimiseClusterMembership((this->level_data_indices), this->data, centroids, processor_count);
             if (cost < this->currentPermutationCost)
             {
                 cout << "Cost improving [id | currentCost | oldCost]:[";
                 centroidPrinter(this->id);
-                cout << " | "  << cost << " | " << this->currentPermutationCost << endl;
+                cout << " | " << cost << " | " << this->currentPermutationCost << endl;
+                centroidPrinter(this->centroids);
+                cout << endl;
                 this->currentPermutationCost = cost;
                 this->clusterMembers = clusterMembership;
-                if (this->currentPermutationCost != cost) {
+                if (this->currentPermutationCost != cost)
+                {
                     cout << "wtf man";
                     exit(2);
                 }
@@ -101,20 +104,24 @@ public:
             auto centroid_id = this->centroids[i];
             auto level_data_indices = this->clusterMembers[centroid_id];
             vector<int> newId = {};
-            for (int k = 0; k < this->id.size(); k++) {
+            for (int k = 0; k < this->id.size(); k++)
+            {
                 newId.push_back(this->id[k]);
             }
             newId.push_back(i);
             auto child = TrainingNode(this->root->vocTreeFile, this->data, level_data_indices, newId, {0}, this->k, this->processor_count, this, this->root);
             this->children.push_back(child);
         }
-
+        cout << "num child" << this->children.size() << endl;
+        cout << "indicies remaining" << this->level_data_indices.size() << endl;
         this->finished = true;
     }
     void process()
     {
         this->fit_level();
         // children are built by now
+
+        clusterMembershipPrinter(this->clusterMembers);
 
         // deal with children
         for (int i = 0; i < this->children.size(); i++)
@@ -168,13 +175,12 @@ public:
         this->root->vocTreeFile = modelName;
         this->processor_count = processor_count;
 
-        if (level_data_indices.size() <= k * 2) // fixme what is this value?
+        if (level_data_indices.size() < k * 2) // fixme what is this value?
         {
             // we are a leaf node
             this->finished = true;
         }
     }
-
 };
 
 TrainingNode deserialise(string modelName, std::shared_ptr<FeatureMatrix> data, json model, TrainingNode *parent, TrainingNode *root)
@@ -211,7 +217,6 @@ ns::person p {
 
     return node;
 }
-
 
 // factory method
 
@@ -265,9 +270,14 @@ void trainModel(string modelName)
     auto data = matToVector(dataMat);
     auto sData = std::make_shared<FeatureMatrix>(data);
 
+    // vector<int> origIndicies = {0, 976, 2023, 2843, 549, 3583, 2431, 1445, 3173, 2044, 1283, 4014, 3316, 836, 4734, 628, 3509, 2941, 221, 2556, 3921, 4776, 754, 4374, 4260, 1453, 4703, 2825, 1372, 573, 1776, 985, 2384, 1675, 1820, 1634, 4782, 2872, 3308, 1993, 2427, 3666, 2064, 2534, 2327, 3957, 3639, 1760, 2444, 3435, 4072, 4138, 143, 1483, 4420, 3414, 2926, 3346, 4656, 3127, 3400, 1461, 3380, 1474, 232, 4973, 4932, 127, 1905, 3080, 1670, 3424, 3880, 2868, 2190, 143, 641, 1382, 2644, 2705, 2783, 3664, 4710};
+
+    // kmedoids(sData, &origIndicies, 8, 12, {0}); exit(1);
+
     // if the voctree file exists
     if (treeFileExists == true)
     {
+        exit(1); // this is broken fixme
         json model = read_jsonfile(vocTree);
         TrainingNode rootNode = deserialise(vocTree, sData, model, nullptr, nullptr);
         rootNode.process();
