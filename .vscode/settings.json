@@ -72,6 +72,7 @@
         "csignal": "cpp",
         "strstream": "cpp",
         "cfenv": "cpp",
-        "*.ipp": "cpp"
+        "*.ipp": "cpp",
+        "forward_list": "cpp"
     }
 }
