@@ -5,15 +5,10 @@
 using namespace std;
 
 std::mutex optimiseSelectionCostMtx; // mutex for critical section
-// map<int, vector<int>> map<int, vector<int>>
-//  ConcurrentIndexRange &range
+
 vector<tuple<int, int, long long, long long>> optimiseSelectionCostKernel(std::shared_ptr<FeatureMatrix> _data, vector<int> threadTasks, vector<vector<int>> &clusters, vector<tuple<int, int>> &tasks) // vector<tuple<int, int, long long, long long>> &resultSet
 {
     auto data = *_data;
-    using std::chrono::duration;
-    using std::chrono::duration_cast;
-    using std::chrono::high_resolution_clock;
-    using std::chrono::milliseconds;
     map<int, bool> clusterExists = {};
 
     // map<clusterId> => bestCenteroidId, bestCentroidCost, totalCost
@@ -22,7 +17,6 @@ vector<tuple<int, int, long long, long long>> optimiseSelectionCostKernel(std::s
     int j = 0;
     for (auto it = threadTasks.begin(); it != threadTasks.end(); it++)
     {
-        auto t1 = high_resolution_clock::now();
         auto task = tasks[*it];
         int clusterId = get<0>(task);
         int pointId = get<1>(task);
@@ -31,31 +25,21 @@ vector<tuple<int, int, long long, long long>> optimiseSelectionCostKernel(std::s
 
         // get data index of point id
         const int pointGlobalIndex = cluster[pointId];
-        // cout << "POOOOINT GLOCAL INDEX " << pointGlobalIndex << endl;
 
         // remove pointId from cluster
         cluster.erase(cluster.begin() + pointId);
-
         auto candidateData = data[pointGlobalIndex];
-
-        // long long sumCost = 0;
-        // long long bestCost = long long_MAX;
-        // int bestCentroidIndex = - 1;
-        // cout << "CCCLLLUSTER SSSIZE" << cluster.size() << endl;
-
         long long cost = 0;
+
         for (int k = 0; k < cluster.size(); k++)
         {
             auto dataData = data[cluster[k]];
             int distance = hammingDistance(candidateData, dataData);
-            // cout << "DISTANCE" << distance << endl;
             cost += distance;
-            // cout << "cost" <<  cost << endl;
         }
 
         if (clusterExists[clusterId]) // results.find(clusterId) != results.end() // results.find(clusterId) != results.end() // clusterExists[clusterId]
         {
-            // exists
             // bestCenteroidId, bestCentroidCost, totalCost
             int bestCentroidCost = get<1>(results[clusterId]);
             int bestCentroidIndex = get<0>(results[clusterId]);
@@ -63,73 +47,37 @@ vector<tuple<int, int, long long, long long>> optimiseSelectionCostKernel(std::s
 
             if (cost < bestCentroidCost)
             {
-                // cout << "updating best" << clusterId << " id:" << pointGlobalIndex << " cost:" << cost << endl;
-
                 bestCentroidCost = cost;
                 bestCentroidIndex = pointId;
             }
             results[clusterId] = make_tuple(bestCentroidIndex, bestCentroidCost, newTotal);
-
-            // auto existingResults = results[clusterId];
         }
         else
         {
-            // cout << "updating best" << clusterId << " id:" << pointGlobalIndex << " cost:" << cost << endl;
             results[clusterId] = make_tuple(pointId, cost, cost);
             clusterExists[clusterId] = true;
         }
-
-        /*if (j % 97 == 0)
-        {
-            auto t2 = high_resolution_clock::now();
-            auto ms_int = duration_cast<milliseconds>(t2 - t1);
-            cout << "thread " << this_thread::get_id() << " | local idx" << j << " | global idx " << *it << " | pc " << ((float(j)) * 100) / (taskMax) << endl;
-            std::cout << ms_int.count() << "ms\n";
-        }*/
-
-        // cout << " done task " << i << endl;
         j++;
-        // mymap.count(c)>0
     }
 
     vector<tuple<int, int, long long, long long>> localResultSet = {}; // clusterId, bestCentroidId, bestCentroidCost, totalCost
 
     for (map<int, tuple<int, long long, long long>>::iterator it = results.begin(); it != results.end(); it++)
     {
-        // keys.push_back(it->first);
         auto key = it->first;
         auto value = results[it->first];
-        // key, get<0>(value), get<1>(value), get<2>(value)
-        cout << "push back optimise " << key << ", " << key << get<0>(value) << ", " << get<1>(value) << ", " << get<2>(value) << endl;
-
         localResultSet.push_back(make_tuple(key, get<0>(value), get<1>(value), get<2>(value)));
     }
 
     return localResultSet;
-
-    //
-
-    /*optimiseSelectionCostMtx.lock();
-    resultSet.insert(resultSet.end(), localResultSet.begin(), localResultSet.end());
-    optimiseSelectionCostMtx.unlock();*/
-
-    /*for (auto x = localResultSet.begin(); x < localResultSet.end(); ++x)
-    {
-        auto it = *x;
-        cout << get<0>(it) << ", " << get<1>(it) << ", " << get<2>(it) << endl;
-    }*/
 }
 
 pair<long long, map<int, vector<int>>> optimiseCentroidSelectionAndComputeClusterCost(std::shared_ptr<FeatureMatrix> _data, map<int, vector<int>> &clusterMembership, int processor_count)
 {
-    cout << "ROUTINE: selection" << endl;
-
     auto data = *_data;
     vector<int> centroids = getClusterKeys(clusterMembership);
     vector<vector<int>> clusters = {};
 
-    // jobs = [];
-    // <centroidIdentifier{0,1,2,4},dataIdentifier{0,1,....1000000}
     vector<tuple<int, int>> tasks = {};
     for (int i = 0; i < centroids.size(); i++)
     {
@@ -137,130 +85,61 @@ pair<long long, map<int, vector<int>>> optimiseCentroidSelectionAndComputeCluste
         vector<int> cluster(clusterMembership[centroid]);
         cluster.push_back(centroid);
         clusters.push_back(cluster);
-        // sort(cluster.begin(), cluster.end());
         for (int j = 0; j < cluster.size(); j++)
         {
-            // TODO FIXE ME, rather than pushing the cluster, push the cluster index and parse the reference to the kernel
-            tasks.push_back(make_tuple(i, j)); // j is the data point index
-            // for each task we need to know:
-            // cluster id, data point id, cluster indicies pointer
+            tasks.push_back(make_tuple(i, j));
         }
     }
 
     auto distributedTasks = distributeTasks(tasks, processor_count);
 
-    // vector<thread> threads(processor_count);
     vector<std::future<std::vector<std::tuple<int, int, long long, long long>>>> futures = {};
-
     vector<tuple<int, int, long long, long long>> resultSet = {}; // clusterId, bestCentroidId, bestCentroidCost, totalCost
-
-    cout << " about to optimisse selection. tasks:" << tasks.size() << endl;
 
     int ix = 0;
     for (map<int, vector<int>>::iterator it = distributedTasks.begin(); it != distributedTasks.end(); ++it)
     {
-        cout << "booting thread " << ix << endl;
         auto task = distributedTasks[it->first];
         auto future = std::async(std::launch::async, [&, task = std::move(task)]()
                                  { return optimiseSelectionCostKernel(_data, task, clusters, tasks); });
         futures.emplace_back(std::move(future));
-
-        // threads[ix] = thread{optimiseSelectionCostKernel, _data, ref(distributedTasks[it->first]), ref(clusters), ref(tasks), ref(resultSet)};
         ix++;
     }
-    /*for (int i = 0; i < ranges.size(); i++)
-    {
-        // void optimiseSelectionCostKernel(cv::Mat &data, ConcurrentIndexRange range, vector<tuple<int, int, vector<int>>> tasks, vector<tuple<int, int, long long, long long>> &resultSet)
-
-        threads[i] = thread{optimiseSelectionCostKernel, ref(data), ref(ranges[i]), ref(clusters), ref(tasks), ref(resultSet)};
-    }*/
-    cout << "about to join in optimisie selection" << endl;
-    /*for (auto &th : threads)
-    {
-        th.join();
-    }*/
-    /*for (int i = 0; i < futures.size(); i++)
-    {
-        futures[i].wait();
-    }*/
 
     map<int, bool> resultHasCluster = {};
     map<int, tuple<int, long long, long long>> resultSetAgg = {}; // clusterId => bestCentroidId, bestCentroidCost, totalCost
 
-    cout << "here 1" << endl;
-
     for (int i = 0; i < futures.size(); i++)
     {
-        cout << "here 2" << endl;
         std::vector<std::tuple<int, int, long long, long long>> data;
-        try
-        {
-            cout << "here 3"  << endl;
-            cout << futures[i].valid() << endl;
-            // crashed here
-
-            cout << "here 3.1"  << endl;
-            data = futures[i].get();
-        }
-        catch (const std::future_error &e)
-        {
-            cout << "here 4" << endl;
-
-            const error_code eCode = e.code();
-            char *sValue = (char *)e.what();
-            std::cout << "Caught a future_error with code " << eCode.message()
-                      << " - what" << sValue << endl;
-            exit(1);
-        }
-        cout << "here 5" << endl;
+        data = futures[i].get();
 
         for (int i = 0; i < data.size(); i++)
         {
-            cout << "iiii iii i" << i << endl;
-            cout << "here 6y" << endl;
-            // crashed here
             auto clusterId = get<0>(data[i]);
-            cout << "here 7" << endl;
-            // crashed here
             auto bestCentroidId = get<1>(data[i]);
-            cout << "here 8" << endl;
-            // crashed here
             auto bestCentroidCost = get<2>(data[i]);
-            cout << "here 9" << endl;
             auto totalCost = get<3>(data[i]);
-            cout << "here 10" << endl;
-            // crashed here
             if (resultHasCluster[clusterId] == true) // resultSetAgg.count(clusterId) > 0
             {
-                cout << "here 11" << endl;
-                            // crashed here
                 int bestGlobalCentroidCost = get<1>(resultSetAgg[clusterId]);
                 int bestGlobalCentroidIndex = get<0>(resultSetAgg[clusterId]);
                 long long newGlobalTotal = get<2>(resultSetAgg[clusterId]) + totalCost;
-                cout << "here 14" << endl;
 
                 if (bestCentroidCost < bestGlobalCentroidCost)
                 {
                     bestGlobalCentroidCost = bestCentroidCost;
                     bestGlobalCentroidIndex = bestCentroidId;
                 }
-                cout << "here 15" << endl;
 
                 resultSetAgg[clusterId] = make_tuple(bestGlobalCentroidIndex, bestGlobalCentroidCost, newGlobalTotal);
             }
             else
             {
-                cout << "here 12" << endl;
-                // crashed here
                 resultSetAgg[clusterId] = make_tuple(bestCentroidId, bestCentroidCost, totalCost);
-                cout << "here 13" << endl;
-
                 resultHasCluster[clusterId] = true;
             }
         }
-        cout << "here 6x" << endl;
-
-        // resultSet.insert(resultSet.end(), data.begin(), data.end());
     }
 
     // contrust total cost for all clusters
@@ -278,12 +157,7 @@ pair<long long, map<int, vector<int>>> optimiseCentroidSelectionAndComputeCluste
         // erase best centroid
         fullCluster.erase(fullCluster.begin() + bestCentroid);
         newClusterMembership[bestCentroidGlobal] = fullCluster;
-        cout << "bestCentroidGlobalId: " << bestCentroidGlobal << " cost: " << get<1>(clusterResults) << endl;
     }
 
     return make_pair(totalCost, newClusterMembership);
-
-    // so for results we need
-
-    //         if (results.count(clusterId) > 0)
 }

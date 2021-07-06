@@ -21,14 +21,11 @@ myType getKey (myType a) {
 vector<vector<uint8_t>> matToVector(cv::Mat mat)
 {
     vector<vector<uint8_t>> out = {};
-    //pass data to 2D array
-
     for (int i = 0; i < mat.rows; ++i)
     {
         vector<uint8_t> row = {};
         for (int j = 0; j < mat.cols; ++j)
         {
-            // cout << int(mat.at<uint8_t>(i, j)) << endl;
             row.push_back(mat.at<uint8_t>(i, j));
         }
         out.push_back(row);
@@ -61,15 +58,6 @@ map<int, vector<int>> distributeTasks(vector<tuple<int, int>> &tasks, int partit
         }
     }
 
-    /*for (int i = 0; i < partitions; i++) {
-        cout << "partition " << i << endl;
-        auto taskIndicies = taskDistibution[i];
-        for (int j = 0; j < taskIndicies.size(); j++) {
-            cout << taskIndicies[j] << ", ";
-        }
-        cout << endl;
-    }*/
-
     return taskDistibution;
 }
 
@@ -95,15 +83,6 @@ map<int, vector<int>> distributeTasks(vector<int> &tasks, int partitions)
             currentPartition = 0;
         }
     }
-
-    /*for (int i = 0; i < partitions; i++) {
-        cout << "partition " << i << endl;
-        auto taskIndicies = taskDistibution[i];
-        for (int j = 0; j < taskIndicies.size(); j++) {
-            cout << taskIndicies[j] << ", ";
-        }
-        cout << endl;
-    }*/
 
     return taskDistibution;
 }
@@ -193,12 +172,9 @@ int hammingDistance(cv::Mat v1, cv::Mat v2)
 }
 void centroidPrinter(vector<int> centroids)
 {
-    /*for (auto i = centroids.begin(); i != centroids.end(); ++i)
+    for (auto i = centroids.begin(); i != centroids.end(); ++i)
     {
         std::cout << *i << ", ";
-    }*/
-    for (int i = 0; i < centroids.size(); i++) {
-        cout << centroids[i] << ",";
     }
     cout << endl;
 }
@@ -212,19 +188,9 @@ void centroidPrinter(vector<uint8_t> centroids)
 }
 int hammingDistance(vector<uint8_t> v1, vector<uint8_t> v2)
 {
-    /*int distance = cv::norm(v1, v2, cv::NORM_HAMMING);
-    return distance;*/
     int sum = 0;
     for (int i = 0; i < v1.size(); i++) {
         sum += int(v1[i] ^ v2[i]);
-    }
-    if (sum < 0) {
-        // print
-        cout << "-------------------" << endl;
-        centroidPrinter(v1);
-        cout << "------------------" << endl;
-        centroidPrinter(v2);
-        cout << "+++++++++++++++++++++++++++++++++++" << endl;
     }
     return sum;
 }
@@ -252,7 +218,6 @@ vector<ConcurrentIndexRange> rangeCalculator(int count, int partitions)
             // isLast = true;
             rangeEnd = rangeEnd + globalRemainder;
         }
-        cout << "start " << rangeStart << " end " << rangeEnd << endl;
         ConcurrentIndexRange range = {rangeStart, rangeEnd};
         ranges.push_back(range);
     }
@@ -262,28 +227,16 @@ vector<ConcurrentIndexRange> rangeCalculator(int count, int partitions)
 
 vector<int> getClusterKeys(map<int, vector<int>> m)
 {
-    //     map<int, vector<int>> clusterMembership = {};
     std::vector<int> keys;
-    cout << "inited keys" << endl;
     int idx = 0;
     for (std::map<int, vector<int>>::iterator it = m.begin(); it != m.end(); ++it)
     {
-        cout << "current IDX " << idx;
         keys.push_back(it->first);
         idx++;
     }
-    cout << endl;
     return keys;
 }
 
-
-/*
-json vectorIntArrayTojsonArray(vector<int> input) {
-    json output;
-    for (int i = 0; i < input.size(); i++) {
-        output.push_back()
-    }
-}*/
 
 void clusterMembershipPrinter(map<int, vector<int>> clusterMembership)
 {
@@ -311,7 +264,6 @@ cv::Mat load_data(char *filename)
 {
     cv::Mat m;
     std::ifstream file(filename);
-    // file.open(filename, ios::in|ios::out|ios::binary);
     get_all("./data");
     if (file.is_open())
     {

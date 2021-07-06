@@ -2,29 +2,23 @@
 #include <opencv2/core/mat.hpp>
 using namespace std;
 
-int seedKernel(std::shared_ptr<FeatureMatrix> _data, int currentCentroidIndex, vector<int> centroids, int k) // data, dataIdValue, centroids, k, metric
+int seedKernel(std::shared_ptr<FeatureMatrix> _data, int currentCentroidIndex, vector<int> centroids, int k)
 {
-        cout << "seed kernel " << currentCentroidIndex << endl;
-
     auto data = *_data;
     int maxDistance = 0;
     int maxIndex = -1;
     // for the whole dataset of features
     for (int r = 0; r < data.size(); r++)
     {
-        // cout << "  r " << r << endl;
         // extract feature from row index
         auto currentDatasetFeature = data[r];
         int minDistance = INT_MAX;
         // for each already selected centroid
         for (int c = 0; c < centroids.size(); c++)
         {
-            // cout << " c " << c << endl;
             int currentCentroidDataSetIndex = centroids[c];
             auto currentCentroidFeature = data[currentCentroidDataSetIndex];
-            // currentDatasetFeature
             const int distance = hammingDistance(currentDatasetFeature, currentCentroidFeature);
-            // min minDistance
             minDistance = min(distance, minDistance);
         }
         if (minDistance > maxDistance)
@@ -38,7 +32,6 @@ int seedKernel(std::shared_ptr<FeatureMatrix> _data, int currentCentroidIndex, v
 
 vector<int> seedCentroids(std::shared_ptr<FeatureMatrix> _data, int _k, vector<int> seeds) // data, k, metric
 {
-    cout << "ROUTINE: seed" << endl;
     auto data = *_data;
 
     // largest index
