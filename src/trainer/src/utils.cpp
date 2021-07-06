@@ -216,7 +216,7 @@ int hammingDistance(vector<uint8_t> v1, vector<uint8_t> v2)
     return distance;*/
     int sum = 0;
     for (int i = 0; i < v1.size(); i++) {
-        sum += v1[i] ^ v2[i];
+        sum += int(v1[i] ^ v2[i]);
     }
     if (sum < 0) {
         // print

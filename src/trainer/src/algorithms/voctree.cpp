@@ -121,7 +121,7 @@ public:
         this->centroids = getClusterKeys(this->clusterMembers);
         centroidPrinter(centroids);
         // save
-        this->save();
+        // this->save();
 
         bool escape = false;
         int iteration = 0;
@@ -146,7 +146,7 @@ public:
                 this->centroids = centroids;
                 centroidPrinter(centroids);
                 // save
-                this->save();
+                // this->save();
             }
             else
             {
@@ -183,7 +183,7 @@ public:
 
         this->finished = true;
         // save
-        this->save();
+        // this->save();
     }
     void process()
     {
