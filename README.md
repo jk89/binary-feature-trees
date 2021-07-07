@@ -38,3 +38,15 @@ https://marketplace.visualstudio.com/items?itemName=betwo.b2-catkin-tools
 catkin build
 ./devel/lib/trainer/trainer 
 Hello World2
+
+
+var results = [];
+Object.keys(a.clusterMembers).forEach((idx) => {
+console.log(idx);
+console.log("x", a.clusterMembers[idx][1].length);
+    Object.keys(a.clusterMembers[idx][1]).forEach((m, memberIdx) => {
+    	if (a.clusterMembers[idx][1][memberIdx] == 490) {
+    		results.push([idx, memberIdx]);
+    	}
+    });
+});
