@@ -155,6 +155,10 @@ public:
         for (int i = 0; i < this->children.size(); i++)
         {
             this->children[i].process();
+            // save on big level progress
+            if (this->parent == nullptr) {
+                this->save();
+            }
         }
     }
     void save()
