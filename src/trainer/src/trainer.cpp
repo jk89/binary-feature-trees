@@ -32,5 +32,5 @@ const auto processor_count = std::thread::hardware_concurrency();
 
 int main(int argc, char **argv)
 {
-    trainModel("small");
+    trainModel("midsized");
 }
