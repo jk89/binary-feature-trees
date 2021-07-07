@@ -17,6 +17,7 @@ vector<pair<int, int>> clusterKernel(vector<int> dataIndices, std::shared_ptr<Fe
     for (int x = 0; x < range.size(); x++)
     {
         int i = range[x];
+        // should the isCentroid check be global? aka lookup dataIndicies here FIXME
         bool isDataPointACentroid = isCentroid[i];
         if (isDataPointACentroid == true)
             continue; // skip calculating optimal membership for centroids as they are not members of any cluster
@@ -54,7 +55,8 @@ vector<pair<int, int>> clusterKernel(vector<int> dataIndices, std::shared_ptr<Fe
     return localThreadResults;
 }
 
-
+// centroidSeedIndices must be global
+// cluster children are relative to the data indicies MUST BE TRANSLATED before prior step FIXME42
 map<int, vector<int>> optimiseClusterMembership(vector<int> dataIndices, std::shared_ptr<FeatureMatrix> _data, vector<int> centroidSeedIndices, int processor_count)
 {
     // auto dataIndices = *_dataIndices;

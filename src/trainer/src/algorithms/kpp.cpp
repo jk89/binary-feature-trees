@@ -2,6 +2,7 @@
 #include <opencv2/core/mat.hpp>
 using namespace std;
 
+// FIXME MUST USE DATA INDICIES YOUR SAMPELING FROM GLOBAL DATA SPACE!
 int seedKernel(std::shared_ptr<FeatureMatrix> _data, int currentCentroidIndex, vector<int> centroids, int k)
 {
     auto data = *_data;

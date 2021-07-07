@@ -72,6 +72,7 @@ vector<tuple<int, int, long long, long long>> optimiseSelectionCostKernel(std::s
     return localResultSet;
 }
 
+// FIXME NEEDS DATA INDICES due to FIXME42
 pair<long long, map<int, vector<int>>> optimiseCentroidSelectionAndComputeClusterCost(std::shared_ptr<FeatureMatrix> _data, map<int, vector<int>> &clusterMembership, int processor_count)
 {
     auto data = *_data;
