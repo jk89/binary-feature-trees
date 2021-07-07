@@ -73,7 +73,7 @@ public:
 
         // this->centroids = getClusterKeys(this->clusterMembers);
 
-        // cout << "here2" << endl;
+         cout << "here2" << endl;
         // clusterMembershipPrinter(this->clusterMembers);
         bool escape = false;
         int iteration = 0;
@@ -84,8 +84,9 @@ public:
             auto cost = get<0>(optimalSelectionResults);
             auto clusterMembership = get<1>(optimalSelectionResults);
             auto centroids = get<2>(optimalSelectionResults); //getClusterKeys(clusterMembership);
-
+            cout << "here 3" << endl;
             clusterMembership = optimiseClusterMembership((this->level_data_indices), this->data, centroids, processor_count);
+            cout << "here 444" << endl;
             if (cost < this->currentPermutationCost)
             {
                 cout << "Cost improving [id | currentCost | oldCost]:[";
@@ -96,7 +97,7 @@ public:
                 this->currentPermutationCost = cost;
                 this->clusterMembers = clusterMembership;
                 this->centroids = centroids;
-                // cout << "22" << endl;
+                cout << "22" << endl;
                 clusterMembershipPrinter(clusterMembership);
                 if (this->currentPermutationCost != cost)
                 {

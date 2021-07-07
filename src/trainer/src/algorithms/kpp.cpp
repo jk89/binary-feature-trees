@@ -12,29 +12,52 @@ int seedKernel(vector<int> dataIndices, std::shared_ptr<FeatureMatrix> _data, in
     // for the current dataset of features
     for (int r = 0; r < dataIndices.size(); r++)
     {
+        /*
+        */
         // extract feature from row index
         auto featureGlobalId = dataIndices[r];
         auto currentDatasetFeature = data[featureGlobalId];
         int minDistance = INT_MAX;
+        int currentC = -1;
         // for each already selected centroid
         for (int c = 0; c < centroids.size(); c++)
         {
             int currentCentroidLocalDataSetIndex = centroids[c];
             int currentCentroidGlobalDataSetIndex = dataIndices[currentCentroidLocalDataSetIndex];
-            auto currentCentroidFeature = data[currentCentroidLocalDataSetIndex];
+            auto currentCentroidFeature = data[currentCentroidGlobalDataSetIndex];
             const int distance = hammingDistance(currentDatasetFeature, currentCentroidFeature);
+            if (currentCentroidGlobalDataSetIndex == featureGlobalId)
+            {
+                // distance should be zero
+                if (distance != 0)
+                {
+
+                    cout << currentCentroidLocalDataSetIndex << "|" << r << endl;
+                    cout << currentCentroidGlobalDataSetIndex << "|" << featureGlobalId << endl;
+                    cout << distance << endl;
+                    centroidPrinter(currentDatasetFeature);
+                    cout << endl;
+                    cout << currentDatasetFeature.size() << endl;
+                    centroidPrinter(currentCentroidFeature);
+                    cout << endl;
+                    cout << currentCentroidFeature.size() << endl;
+
+                    cout << endl;
+                    exit(1);
+                }
+            }
             minDistance = min(distance, minDistance);
         }
         if (minDistance > maxDistance)
         {
-                            // cout << "maxIndex" << maxIndex << endl;
-// cout << "rrr " << r << endl;
+
             maxDistance = minDistance;
             maxIndex = r;
+            cout << "maxIndex: " << maxIndex << " minDistance: " << minDistance << endl;
         }
     }
 
-   //  cout << "exit:" << maxIndex << endl;
+    cout << "exit:" << maxIndex << endl;
 
     return maxIndex; // return the best centroid
 }
@@ -62,7 +85,8 @@ vector<int> seedCentroids(vector<int> dataIndices, std::shared_ptr<FeatureMatrix
     {
         const int nextCentroid = seedKernel(dataIndices, _data, i, centroids, k);
         centroids.push_back(nextCentroid);
-        centroidPrinter(centroids); cout<<endl;
+        centroidPrinter(centroids);
+        cout << endl;
     }
 
     // cout << "finished seeds final centroids" << endl;
