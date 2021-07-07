@@ -48,12 +48,12 @@ public:
         if (this->finished == true)
             return;
 
-        cout << "about to seed" << endl;
-        centroidPrinter(centroids);
-        cout << endl;
+        // cout "about to seed" << endl;
+        // centroidPrinter(centroids);
+        // cout endl;
 
-        centroidPrinter(this->level_data_indices);
-        cout << endl;
+        // centroidPrinter(this->level_data_indices);
+        // cout endl;
 
         // if centroid seeds are incomplete
         if (this->centroids.size() != this->k)
@@ -63,19 +63,19 @@ public:
 
         
 
-        cout << "here1" << endl;
-        centroidPrinter(centroids);
-        cout << endl;
+        // cout "here1" << endl;
+        // centroidPrinter(centroids);
+        // cout endl;
 
 
         this->clusterMembers = optimiseClusterMembership(this->level_data_indices, this->data, this->centroids, processor_count);
 
-        cout << "here 1.5" << endl;
-        clusterMembershipPrinter(this->clusterMembers);
+        // cout "here 1.5" << endl;
+        // clusterMembershipPrinter(this->clusterMembers);
 
         // this->centroids = getClusterKeys(this->clusterMembers);
 
-         cout << "here2" << endl;
+        // cout << "here2" << endl;
         // clusterMembershipPrinter(this->clusterMembers);
         bool escape = false;
         int iteration = 0;
@@ -86,35 +86,35 @@ public:
             auto cost = get<0>(optimalSelectionResults);
             auto clusterMembership = get<1>(optimalSelectionResults);
             auto centroids = get<2>(optimalSelectionResults); //getClusterKeys(clusterMembership);
-            cout << "here 3" << endl;
-            centroidPrinter(centroids); cout << endl;
-            clusterMembershipPrinter(clusterMembership);
+            // cout "here 3" << endl;
+            // centroidPrinter(centroids); cout << endl;
+            // clusterMembershipPrinter(clusterMembership);
             clusterMembership = optimiseClusterMembership((this->level_data_indices), this->data, centroids, processor_count);
-            cout << "here 444" << endl;
+            // cout "here 444" << endl;
             if (cost < this->currentPermutationCost)
             {
                 cout << "Cost improving [id | currentCost | oldCost]:[";
                 centroidPrinter(this->id);
                 cout << " | " << cost << " | " << this->currentPermutationCost << endl;
-                centroidPrinter(this->centroids);
+                // centroidPrinter(this->centroids);
                 cout << endl;
                 this->currentPermutationCost = cost;
                 this->clusterMembers = clusterMembership;
                 this->centroids = centroids;
-                cout << "22" << endl;
+                /*cout << "22" << endl;
                 clusterMembershipPrinter(clusterMembership);
                 if (this->currentPermutationCost != cost)
                 {
                     cout << "wtf man";
                     exit(2);
-                }
-                this->save();
+                }*/
+                // this->save();
                 // centroids = getClusterKeys(this->clusterMembers);
                 // this->centroids = centroids;
             }
             else
             {
-                cout << "cost not improving (cost,best):(" << cost << "|" << this->currentPermutationCost << endl;
+                // cout << "cost not improving (cost,best):(" << cost << "|" << this->currentPermutationCost << endl;
                 escape = true;
             }
             iteration++;
@@ -130,7 +130,7 @@ public:
         {
             // auto centroid_id = this->centroids[i];
             auto level_data_indices = this->clusterMembers[i]; // centroid_id
-            cout << "next level" << level_data_indices.size() << endl;
+            // cout << "next level" << level_data_indices.size() << endl;
             vector<int> newId = {};
             for (int k = 0; k < this->id.size(); k++)
             {
@@ -142,8 +142,8 @@ public:
             auto child = TrainingNode(this->root->vocTreeFile, this->data, level_data_indices, newId, {0}, this->k, this->processor_count, this, this->root);
             this->children.push_back(child);
         }
-        cout << "num child" << this->children.size() << endl;
-        cout << "indicies remaining" << this->level_data_indices.size() << endl;
+        // cout << "num child" << this->children.size() << endl;
+        // cout << "indicies remaining" << this->level_data_indices.size() << endl;
         this->finished = true;
     }
     void process()

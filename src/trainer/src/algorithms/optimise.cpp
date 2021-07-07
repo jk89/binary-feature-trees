@@ -74,7 +74,7 @@ vector<tuple<int, int, long long, long long>> optimiseSelectionCostKernel(vector
                 // cout << "cost imp" << endl;
                 bestCentroidCost = cost;
                 bestCentroidIndex = pointId;
-                cout << "winning point" << pointId << endl;
+                // cout << "winning point" << pointId << endl;
             }
 
             results[clusterId] = make_tuple(bestCentroidIndex, bestCentroidCost, newTotal);
@@ -82,7 +82,7 @@ vector<tuple<int, int, long long, long long>> optimiseSelectionCostKernel(vector
         else
         {
             // cout << "cluster not exist" << endl;
-            cout << "winning point" << pointId << endl;
+            // cout << "winning point" << pointId << endl;
 
             results[clusterId] = make_tuple(pointId, cost, cost);
             clusterExists[clusterId] = true;
@@ -116,7 +116,7 @@ tuple<long long, map<int, vector<int>>, vector<int>> optimiseCentroidSelectionAn
         vector<int> cluster(clusterMembership[i]); // array of cluster but without the centroid // centroid
         cluster.push_back(centroid);                      // add the centroid
         clusters.push_back(cluster);                      // add the cluster
-        cout << "in opt, cidx" << i << "|" << cluster.size() << endl;
+        // cout << "in opt, cidx" << i << "|" << cluster.size() << endl;
         for (int j = 0; j < cluster.size(); j++)
         {
             tasks.push_back(make_tuple(i, j)); // so task is a list of local centroid ids (i) and their cluster members (j)
@@ -167,14 +167,14 @@ tuple<long long, map<int, vector<int>>, vector<int>> optimiseCentroidSelectionAn
                     bestGlobalCentroidCost = bestCentroidCost;
                     bestGlobalCentroidIndex = bestCentroidId;
 
-                    cout << "agg 2" << bestCentroidId << endl;
+                    // cout << "agg 2" << bestCentroidId << endl;
                 }
 
                 resultSetAgg[clusterId] = make_tuple(bestGlobalCentroidIndex, bestGlobalCentroidCost, newGlobalTotal);
             }
             else
             {
-                                    cout << "agg 1" << bestCentroidId << endl;
+                                    // cout << "agg 1" << bestCentroidId << endl;
 
                 resultSetAgg[clusterId] = make_tuple(bestCentroidId, bestCentroidCost, totalCost);
                 resultHasCluster[clusterId] = true;
