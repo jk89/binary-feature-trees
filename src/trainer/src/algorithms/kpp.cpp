@@ -62,6 +62,7 @@ vector<int> seedCentroids(vector<int> dataIndices, std::shared_ptr<FeatureMatrix
     {
         const int nextCentroid = seedKernel(dataIndices, _data, i, centroids, k);
         centroids.push_back(nextCentroid);
+        centroidPrinter(centroids); cout<<endl;
     }
 
     // cout << "finished seeds final centroids" << endl;

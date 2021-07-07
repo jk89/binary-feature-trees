@@ -48,16 +48,26 @@ public:
         if (this->finished == true)
             return;
 
+        cout << "about to seed" << endl;
+        centroidPrinter(centroids);
+        cout << endl;
+
+        centroidPrinter(this->level_data_indices);
+        cout << endl;
+
         // if centroid seeds are incomplete
         if (this->centroids.size() != this->k)
         {
             this->centroids = seedCentroids(this->level_data_indices, this->data, this->k, this->centroids);
         }
 
-        /*cout << "here1" << endl;
+        
+
+        cout << "here1" << endl;
         centroidPrinter(centroids);
         cout << endl;
-        clusterMembershipPrinter(this->clusterMembers);*/
+        clusterMembershipPrinter(this->clusterMembers);
+
 
         this->clusterMembers = optimiseClusterMembership(this->level_data_indices, this->data, this->centroids, processor_count);
 
@@ -122,6 +132,8 @@ public:
                 newId.push_back(this->id[k]);
             }
             newId.push_back(i);
+            // vector<int> newSeeds = {};
+            // newSeeds.push_back(level_data_indices[0]);
             auto child = TrainingNode(this->root->vocTreeFile, this->data, level_data_indices, newId, {0}, this->k, this->processor_count, this, this->root);
             this->children.push_back(child);
         }
