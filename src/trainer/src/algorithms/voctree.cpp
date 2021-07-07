@@ -66,10 +66,12 @@ public:
         cout << "here1" << endl;
         centroidPrinter(centroids);
         cout << endl;
-        clusterMembershipPrinter(this->clusterMembers);
 
 
         this->clusterMembers = optimiseClusterMembership(this->level_data_indices, this->data, this->centroids, processor_count);
+
+        cout << "here 1.5" << endl;
+        clusterMembershipPrinter(this->clusterMembers);
 
         // this->centroids = getClusterKeys(this->clusterMembers);
 
@@ -80,11 +82,13 @@ public:
         // best cluster memebership up here
         while (escape == false)
         {
-            auto optimalSelectionResults = optimiseCentroidSelectionAndComputeClusterCost(this->level_data_indices, this->data, this->clusterMembers, processor_count);
+            auto optimalSelectionResults = optimiseCentroidSelectionAndComputeClusterCost(this->level_data_indices, this->data, centroids, this->clusterMembers, processor_count);
             auto cost = get<0>(optimalSelectionResults);
             auto clusterMembership = get<1>(optimalSelectionResults);
             auto centroids = get<2>(optimalSelectionResults); //getClusterKeys(clusterMembership);
             cout << "here 3" << endl;
+            centroidPrinter(centroids); cout << endl;
+            clusterMembershipPrinter(clusterMembership);
             clusterMembership = optimiseClusterMembership((this->level_data_indices), this->data, centroids, processor_count);
             cout << "here 444" << endl;
             if (cost < this->currentPermutationCost)

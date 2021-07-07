@@ -74,12 +74,16 @@ vector<tuple<int, int, long long, long long>> optimiseSelectionCostKernel(vector
                 // cout << "cost imp" << endl;
                 bestCentroidCost = cost;
                 bestCentroidIndex = pointId;
+                cout << "winning point" << pointId << endl;
             }
+
             results[clusterId] = make_tuple(bestCentroidIndex, bestCentroidCost, newTotal);
         }
         else
         {
             // cout << "cluster not exist" << endl;
+            cout << "winning point" << pointId << endl;
+
             results[clusterId] = make_tuple(pointId, cost, cost);
             clusterExists[clusterId] = true;
         }
@@ -99,19 +103,20 @@ vector<tuple<int, int, long long, long long>> optimiseSelectionCostKernel(vector
 }
 
 // FIXME NEEDS DATA INDICES due to FIXME42
-tuple<long long, map<int, vector<int>>, vector<int>> optimiseCentroidSelectionAndComputeClusterCost(vector<int> dataIndices, std::shared_ptr<FeatureMatrix> _data, map<int, vector<int>> &clusterMembership, int processor_count)
+tuple<long long, map<int, vector<int>>, vector<int>> optimiseCentroidSelectionAndComputeClusterCost(vector<int> dataIndices, std::shared_ptr<FeatureMatrix> _data, vector<int> centroids, map<int, vector<int>> &clusterMembership, int processor_count)
 {
     auto data = *_data;
-    vector<int> centroids = getClusterKeys(clusterMembership); // local
+    // vector<int> centroids = getClusterKeys(clusterMembership); // local
     vector<vector<int>> clusters = {};
 
     vector<tuple<int, int>> tasks = {};
     for (int i = 0; i < centroids.size(); i++)
     {
         int centroid = centroids[i];                      // local to data indicies
-        vector<int> cluster(clusterMembership[centroid]); // array of cluster but without the centroid
+        vector<int> cluster(clusterMembership[i]); // array of cluster but without the centroid // centroid
         cluster.push_back(centroid);                      // add the centroid
         clusters.push_back(cluster);                      // add the cluster
+        cout << "in opt, cidx" << i << "|" << cluster.size() << endl;
         for (int j = 0; j < cluster.size(); j++)
         {
             tasks.push_back(make_tuple(i, j)); // so task is a list of local centroid ids (i) and their cluster members (j)
@@ -161,12 +166,16 @@ tuple<long long, map<int, vector<int>>, vector<int>> optimiseCentroidSelectionAn
                 {
                     bestGlobalCentroidCost = bestCentroidCost;
                     bestGlobalCentroidIndex = bestCentroidId;
+
+                    cout << "agg 2" << bestCentroidId << endl;
                 }
 
                 resultSetAgg[clusterId] = make_tuple(bestGlobalCentroidIndex, bestGlobalCentroidCost, newGlobalTotal);
             }
             else
             {
+                                    cout << "agg 1" << bestCentroidId << endl;
+
                 resultSetAgg[clusterId] = make_tuple(bestCentroidId, bestCentroidCost, totalCost);
                 resultHasCluster[clusterId] = true;
             }
@@ -189,7 +198,8 @@ tuple<long long, map<int, vector<int>>, vector<int>> optimiseCentroidSelectionAn
         auto clusterResults = resultSetAgg[i]; // make_tuple(bestGlobalCentroidIndex, bestGlobalCentroidCost, newGlobalTotal);
         totalCost += get<2>(clusterResults);
         int bestCentroid = get<0>(clusterResults); // this is local to dataIndicies
-        int bestLocalCentroidIdx = dataIndices[bestCentroid];
+        
+        // int bestLocalCentroidIdx = dataIndices[bestCentroid];
         // int oldCentroidId = centroids[i];
         auto fullCluster = clusters[i]; // cluster including old centroid and new centroid
 
@@ -197,7 +207,7 @@ tuple<long long, map<int, vector<int>>, vector<int>> optimiseCentroidSelectionAn
         // erase best centroid
         fullCluster.erase(fullCluster.begin() + bestCentroid);
         newClusterMembership[i] = fullCluster;
-        newCentroidIndices.push_back(bestLocalCentroidIdx);
+        newCentroidIndices.push_back(bestCentroid);
     }
 
     return make_tuple(totalCost, newClusterMembership, newCentroidIndices);

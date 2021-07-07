@@ -16,7 +16,7 @@ map<int, vector<int>> kmedoids(std::shared_ptr<FeatureMatrix> _data, vector<int>
     int iteration = 0;
     while (escape == false)
     {
-        auto optimalSelectionResults = optimiseCentroidSelectionAndComputeClusterCost(indices, _data, bestMembership, processor_count);
+        auto optimalSelectionResults = optimiseCentroidSelectionAndComputeClusterCost(indices, _data, centroids, bestMembership, processor_count);
         cout << "c" << endl;
         auto cost = get<0>(optimalSelectionResults);
                 cout << "c1" << endl;
