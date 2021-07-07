@@ -3,41 +3,49 @@
 using namespace std;
 
 // FIXME MUST USE DATA INDICIES YOUR SAMPELING FROM GLOBAL DATA SPACE!
-int seedKernel(std::shared_ptr<FeatureMatrix> _data, int currentCentroidIndex, vector<int> centroids, int k)
+int seedKernel(vector<int> dataIndices, std::shared_ptr<FeatureMatrix> _data, int currentCentroidIndex, vector<int> centroids, int k)
 {
+    // centroids should be local dataIndicies indicies
     auto data = *_data;
     int maxDistance = 0;
     int maxIndex = -1;
-    // for the whole dataset of features
-    for (int r = 0; r < data.size(); r++)
+    // for the current dataset of features
+    for (int r = 0; r < dataIndices.size(); r++)
     {
         // extract feature from row index
-        auto currentDatasetFeature = data[r];
+        auto featureGlobalId = dataIndices[r];
+        auto currentDatasetFeature = data[featureGlobalId];
         int minDistance = INT_MAX;
         // for each already selected centroid
         for (int c = 0; c < centroids.size(); c++)
         {
-            int currentCentroidDataSetIndex = centroids[c];
-            auto currentCentroidFeature = data[currentCentroidDataSetIndex];
+            int currentCentroidLocalDataSetIndex = centroids[c];
+            int currentCentroidGlobalDataSetIndex = dataIndices[currentCentroidLocalDataSetIndex];
+            auto currentCentroidFeature = data[currentCentroidLocalDataSetIndex];
             const int distance = hammingDistance(currentDatasetFeature, currentCentroidFeature);
             minDistance = min(distance, minDistance);
         }
         if (minDistance > maxDistance)
         {
+                            cout << "maxIndex" << maxIndex << endl;
+cout << "rrr " << r << endl;
             maxDistance = minDistance;
             maxIndex = r;
         }
     }
+
+    cout << "exit:" << maxIndex << endl;
+
     return maxIndex; // return the best centroid
 }
 
-vector<int> seedCentroids(std::shared_ptr<FeatureMatrix> _data, int _k, vector<int> seeds) // data, k, metric
+vector<int> seedCentroids(vector<int> dataIndices, std::shared_ptr<FeatureMatrix> _data, int _k, vector<int> seeds) // data, k, metric
 {
     // this completely ignores the dataIndicies! FIXME
     auto data = *_data;
 
     // largest index
-    const int dataLength = data.size();
+    const int dataLength = dataIndices.size();
     vector<int> centroids = seeds;
 
     int k = _k - seeds.size();
@@ -45,15 +53,20 @@ vector<int> seedCentroids(std::shared_ptr<FeatureMatrix> _data, int _k, vector<i
     // add random first centroid index
     if (seeds.size() == 0)
     {
-        centroids.push_back(random(0, dataLength - 1));
+        auto randomSeedLocalIdx = random(0, dataLength - 1);
+        centroids.push_back(randomSeedLocalIdx);
     }
 
     // for the rest of k
     for (int i = 0; i < k; i++)
     {
-        const int nextCentroid = seedKernel(_data, i, centroids, k);
+        const int nextCentroid = seedKernel(dataIndices, _data, i, centroids, k);
         centroids.push_back(nextCentroid);
     }
+
+    cout << "finished seeds final centroids" << endl;
+    centroidPrinter(centroids);
+    cout << endl;
 
     return centroids;
 }
