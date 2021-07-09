@@ -26,6 +26,34 @@ public:
     json serialise() {}
 };
 
+class ComputeNode
+{
+public:
+    vector<int> id;
+    ComputeNode *parent;
+    ComputeNode *root;
+    vector<uint8_t> feature;
+    int feature_id = -1;
+    vector<ComputeNode> children;
+    bool isRoot = false;
+    bool isLeaf = false;
+    // std::shared_ptr<FeatureMatrix> data,
+    ComputeNode()
+    {
+        this->parent = nullptr;
+        this->id = {};
+        this->root = this;
+        this->isRoot = true;
+    }
+    ComputeNode(vector<int> id, int feature_id, ComputeNode *parent, ComputeNode *root)
+    {
+        this->parent = parent;
+        this->id = id;
+        this->root = root;
+        this->feature_id = feature_id;
+    }
+};
+
 class TrainingNode : public Node
 {
 public:
@@ -85,8 +113,14 @@ public:
         // FIXME SHOULD SKIP THIS IS WE HAVE BEEN DESERIALISED AKA THE CHILDREN CAN ALREADY EXIST
         for (int i = 0; i < (this->centroids.size()); i++)
         {
-            auto level_data_indices = this->clusterMembers[i]; // centroid_id
-            vector<int> newId = this->id; // {};
+            // these are local bozo convert to global so each level is global
+            auto localClusterMembership = this->clusterMembers[i]; // centroid_id
+            vector <int> level_data_indices = {};
+            for (int j = 0; j < localClusterMembership.size(); j++) {
+                level_data_indices.push_back(this->level_data_indices[localClusterMembership[j]]);
+            }
+            // fixme convert these into global
+            vector<int> newId = this->id;                      // {};
             /*for (int k = 0; k < this->id.size(); k++) backup just in case
             {
                 newId.push_back(this->id[k]);
@@ -107,7 +141,8 @@ public:
         {
             this->children[i].process();
             // save on big level progress
-            if (this->parent == nullptr) {
+            if (this->parent == nullptr)
+            {
                 this->save();
             }
         }
@@ -200,6 +235,100 @@ ns::person p {
 
     return node;
 }
+
+ComputeNode trainingNodeToComputeNode(TrainingNode *parentTrainingNode, ComputeNode *parentComputeNode)
+{
+    ComputeNode parentNode;
+    if (parentTrainingNode->parent == nullptr)
+    {
+        ComputeNode parentNode = ComputeNode();
+        parentComputeNode = &parentNode; // is this right?
+        // need to return parent node
+    }
+
+    ComputeNode *rootNode = parentComputeNode->root;
+
+    if (parentTrainingNode->centroids.size() == 0)
+    {
+        if (parentTrainingNode->level_data_indices.size() == 0)
+        {
+            // parent is leaf
+            parentComputeNode->isLeaf = true;
+        }
+        else
+        {
+            // add leaves
+            for (int i = 0; i < parentTrainingNode->level_data_indices.size(); i++)
+            {
+                vector<int> leafNodeId = parentComputeNode->id;
+                leafNodeId.push_back(i);
+                //             auto centroidLocalId = parentTrainingNode->centroids[i];
+                ComputeNode leaf = ComputeNode();
+            }
+        }
+    }
+    else
+    {
+        for (int i = 0; i < parentTrainingNode->children.size(); i++)
+        {
+            // get feature id
+            auto centroidLocalId = parentTrainingNode->centroids[i];
+            auto centroidGlobalId = parentTrainingNode->level_data_indices[centroidLocalId];
+            auto featureId = centroidGlobalId;
+
+            // get node id
+            auto nodeId = parentComputeNode->id;
+            nodeId.push_back(i);
+
+            auto childNode = ComputeNode(nodeId, featureId, parentComputeNode, rootNode);
+            parentComputeNode->children.push_back(childNode);
+
+            // process child training node
+            auto childTrainingNode = parentTrainingNode->children[i];
+            trainingNodeToComputeNode(&childTrainingNode, &childNode);
+        }
+    }
+
+    /*ComputeNode rootNode;
+    if (trainingNode.parent == nullptr)
+    {
+        rootNode = ComputeNode(); // root
+    }
+
+    if (trainingNode.centroids.size() == 0)
+    {
+        // no children could be a leaf or parent could be a leaf
+        if (trainingNode.level_data_indices.size() == 0)
+        {
+            // parent is leaf
+            parent->isLeaf = true;
+        }
+        else
+        {
+            // add leaves
+            for (int i = 0; i < trainingNode.level_data_indices.size(); i++)
+            {
+                vector<int> leafNodeId = parent->id;
+                leafNodeId.push_back(i);
+                ComputeNode leaf = ComputeNode();
+            }
+        }
+    }
+    else
+    {
+        for (int i = 0; i < trainingNode.children.size(); i++)
+        {
+            // get feature id
+            auto centroidLocalId = trainingNode.centroids[i];
+            auto centroidGlobalId = trainingNode.level_data_indices[centroidLocalId];
+            auto featureId = centroidGlobalId;
+
+            // get node id
+            auto nodeId = trainingNode.id;
+            nodeId.push_back(i);
+        }
+    }*/
+};
 
 // factory method
 
