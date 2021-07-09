@@ -17,47 +17,29 @@ vector<tuple<int, int, long long, long long>> optimiseSelectionCostKernel(vector
     int j = 0;
     for (auto it = threadTasks.begin(); it != threadTasks.end(); it++)
     {
-        // cout << "1" << endl;
         // so task is a list of local centroid ids (i) and their cluster members (j)
         // where the centroid local id is also included in the cluster membership
         auto task = tasks[*it];
         int clusterId = get<0>(task); // centroidDataPoint local index of the centroid aka 1st, 2nd centroid
         // which can be found in
         int pointId = get<1>(task); // clusterDataPoint this is the idx within a particular clusters[clusterId] which includes the prior centroids index in this list
-
-        vector<int> cluster(clusters[clusterId]); // get<2>(task);
-        // vector<int> clusterOriginal(clusters[clusterId]);
-
+        vector<int> cluster(clusters[clusterId]);
+        
         // get data index of point id (point is a candidate as a new centroid)
         const int pointLocalIndex = cluster[pointId];
-        // cout << "2" << endl;
         const int pointGlobalIndex = dataIndices[pointLocalIndex];
-        // cout << pointLocalIndex << endl;
-        // cout << pointGlobalIndex << endl;
-        // cout << "3" << endl;
+
         // remove pointId from cluster
         cluster.erase(cluster.begin() + pointId);
-        //cout << "4" << endl;
         auto candidateData = data[pointGlobalIndex];
-        // cout << "5" << endl;
         long long cost = 0;
 
         for (int k = 0; k < cluster.size(); k++) // for the remaining cluster points
         {
-            // cout << "k0+ " << k << endl;
             auto localId = cluster[k];
-
-            // cout << "k1+ " << k << endl;
-
             auto globalId = dataIndices[localId];
-            // cout << "k2+ " << k << endl;
-
             auto dataData = data[globalId];
-            // cout << "k3+ " << k << endl;
-
             int distance = hammingDistance(candidateData, dataData);
-            // cout << "k4+ " << k << endl;
-
             cost += distance;
         }
 
@@ -71,19 +53,14 @@ vector<tuple<int, int, long long, long long>> optimiseSelectionCostKernel(vector
 
             if (cost < bestCentroidCost)
             {
-                // cout << "cost imp" << endl;
                 bestCentroidCost = cost;
                 bestCentroidIndex = pointId;
-                // cout << "winning point" << pointId << endl;
             }
 
             results[clusterId] = make_tuple(bestCentroidIndex, bestCentroidCost, newTotal);
         }
         else
         {
-            // cout << "cluster not exist" << endl;
-            // cout << "winning point" << pointId << endl;
-
             results[clusterId] = make_tuple(pointId, cost, cost);
             clusterExists[clusterId] = true;
         }
@@ -106,7 +83,6 @@ vector<tuple<int, int, long long, long long>> optimiseSelectionCostKernel(vector
 tuple<long long, map<int, vector<int>>, vector<int>> optimiseCentroidSelectionAndComputeClusterCost(vector<int> dataIndices, std::shared_ptr<FeatureMatrix> _data, vector<int> centroids, map<int, vector<int>> &clusterMembership, int processor_count)
 {
     auto data = *_data;
-    // vector<int> centroids = getClusterKeys(clusterMembership); // local
     vector<vector<int>> clusters = {};
 
     vector<tuple<int, int>> tasks = {};
@@ -116,7 +92,6 @@ tuple<long long, map<int, vector<int>>, vector<int>> optimiseCentroidSelectionAn
         vector<int> cluster(clusterMembership[i]); // array of cluster but without the centroid // centroid
         cluster.push_back(centroid);                      // add the centroid
         clusters.push_back(cluster);                      // add the cluster
-        // cout << "in opt, cidx" << i << "|" << cluster.size() << endl;
         for (int j = 0; j < cluster.size(); j++)
         {
             tasks.push_back(make_tuple(i, j)); // so task is a list of local centroid ids (i) and their cluster members (j)
@@ -132,7 +107,6 @@ tuple<long long, map<int, vector<int>>, vector<int>> optimiseCentroidSelectionAn
     int ix = 0;
     for (map<int, vector<int>>::iterator it = distributedTasks.begin(); it != distributedTasks.end(); ++it)
     {
-        // cout << "idx in opt" << ix << endl;
         auto task = distributedTasks[it->first];
         auto future = std::async(std::launch::async, [&, task = std::move(task)]()
                                  { return optimiseSelectionCostKernel(dataIndices, _data, task, clusters, tasks); });
@@ -145,11 +119,8 @@ tuple<long long, map<int, vector<int>>, vector<int>> optimiseCentroidSelectionAn
 
     for (int i = 0; i < futures.size(); i++)
     {
-        // cout << "i in opt get" << i << endl;
         std::vector<std::tuple<int, int, long long, long long>> data;
         data = futures[i].get();
-        // cout << "i in opt got" << i << endl;
-
         for (int i = 0; i < data.size(); i++)
         {
             auto clusterId = get<0>(data[i]);
@@ -166,16 +137,12 @@ tuple<long long, map<int, vector<int>>, vector<int>> optimiseCentroidSelectionAn
                 {
                     bestGlobalCentroidCost = bestCentroidCost;
                     bestGlobalCentroidIndex = bestCentroidId;
-
-                    // cout << "agg 2" << bestCentroidId << endl;
                 }
 
                 resultSetAgg[clusterId] = make_tuple(bestGlobalCentroidIndex, bestGlobalCentroidCost, newGlobalTotal);
             }
             else
             {
-                                    // cout << "agg 1" << bestCentroidId << endl;
-
                 resultSetAgg[clusterId] = make_tuple(bestCentroidId, bestCentroidCost, totalCost);
                 resultHasCluster[clusterId] = true;
             }
@@ -198,12 +165,7 @@ tuple<long long, map<int, vector<int>>, vector<int>> optimiseCentroidSelectionAn
         auto clusterResults = resultSetAgg[i]; // make_tuple(bestGlobalCentroidIndex, bestGlobalCentroidCost, newGlobalTotal);
         totalCost += get<2>(clusterResults);
         int bestCentroid = get<0>(clusterResults); // this is local to dataIndicies
-        
-        // int bestLocalCentroidIdx = dataIndices[bestCentroid];
-        // int oldCentroidId = centroids[i];
         auto fullCluster = clusters[i]; // cluster including old centroid and new centroid
-
-        // const int bestCentroidGlobal = fullCluster[bestCentroid]; // get centroid
         // erase best centroid
         fullCluster.erase(fullCluster.begin() + bestCentroid);
         newClusterMembership[i] = fullCluster;
