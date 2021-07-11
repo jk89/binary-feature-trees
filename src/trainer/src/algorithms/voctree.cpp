@@ -37,6 +37,20 @@ public:
     vector<ComputeNode> children;
     bool isRoot = false;
     bool isLeaf = false;
+    json serialise()
+    {
+        json jnode;
+        jnode["id"] = this->id;
+        jnode["feature_id"] = this->feature_id;
+        jnode["isLeaf"] = this->isLeaf;
+        auto children = json::array();
+        for (auto child = this->children.begin(); child != this->children.end(); ++child)
+        {
+            children.push_back(child->serialise());
+        }
+        jnode["children"] = children;
+        return jnode;
+    }
     // std::shared_ptr<FeatureMatrix> data,
     ComputeNode()
     {
@@ -79,9 +93,6 @@ public:
             this->centroids = seedCentroids(this->level_data_indices, this->data, this->k, this->centroids);
         }
 
-
-
-
         this->clusterMembers = optimiseClusterMembership(this->level_data_indices, this->data, this->centroids, processor_count);
 
         bool escape = false;
@@ -113,19 +124,19 @@ public:
             iteration++;
         }
 
-
         // build children
         // FIXME SHOULD SKIP THIS IS WE HAVE BEEN DESERIALISED AKA THE CHILDREN CAN ALREADY EXIST
         for (int i = 0; i < (this->centroids.size()); i++)
         {
             // these are local bozo convert to global so each level is global
             auto localClusterMembership = this->clusterMembers[i]; // centroid_id
-            vector <int> level_data_indices = {};
-            for (int j = 0; j < localClusterMembership.size(); j++) {
+            vector<int> level_data_indices = {};
+            for (int j = 0; j < localClusterMembership.size(); j++)
+            {
                 level_data_indices.push_back(this->level_data_indices[localClusterMembership[j]]);
             }
             // fixme convert these into global
-            vector<int> newId = this->id;                      // {};
+            vector<int> newId = this->id; // {};
             /*for (int k = 0; k < this->id.size(); k++) backup just in case
             {
                 newId.push_back(this->id[k]);
@@ -241,50 +252,188 @@ ns::person p {
     return node;
 }
 
-
-ComputeNode trainingNodeToComputeNode(TrainingNode *parentTrainingNode, ComputeNode *parentComputeNode)
+ComputeNode trainingNodeToComputeNode2(TrainingNode *parentTrainingNode, ComputeNode *parentComputeNode)
 {
-
-    ComputeNode *rootNode = parentComputeNode->root;
-
-    if (parentTrainingNode->centroids.size() == 0) // centroids.size() == 1
+    // create parentCN if not exist
+    ComputeNode parentCN;
+    if (parentComputeNode == nullptr)
     {
+        parentCN = ComputeNode();
+        parentComputeNode = &parentCN;
+    }
+    else
+    {
+        parentCN = *parentComputeNode;
+    }
+
+    //deal with centroids
+    // centroid case NO centroids
+    if (parentTrainingNode->centroids.size() == 1)
+    {
+        // trainer leaves [0] centroids if this level was
+        // skipped as it was too small
         if (parentTrainingNode->level_data_indices.size() == 0)
         {
+            cout << "no level data parent centroid is leaf" << endl;
             // parent is leaf
             parentComputeNode->isLeaf = true;
         }
         else
         {
+            cout << "had level data need to add leaves" << parentTrainingNode->level_data_indices.size() << endl;
             // add leaves
             for (int i = 0; i < parentTrainingNode->level_data_indices.size(); i++)
             {
                 vector<int> leafNodeId = parentComputeNode->id;
                 leafNodeId.push_back(i);
-                //             auto centroidLocalId = parentTrainingNode->centroids[i];
-                ComputeNode leaf = ComputeNode();
+                ComputeNode leaf = ComputeNode(leafNodeId, parentTrainingNode->level_data_indices[i], parentComputeNode, parentComputeNode->root); // ComputeNode(vector<int> id, int feature_id, ComputeNode *parent, ComputeNode *root)
+                leaf.isLeaf = true;
+                parentComputeNode->children.push_back(leaf);
             }
         }
     }
     else
     {
-        for (int i = 0; i < parentTrainingNode->children.size(); i++)
+        // we have a layer of valid centroids
+        for (int i = 0; i < parentTrainingNode->centroids.size(); i++)
+        {
+            // create centroid node and add it to parentCN
+            auto centroidLocalId = parentTrainingNode->centroids[i];
+            auto centroidGlobalId = parentTrainingNode->level_data_indices[centroidLocalId];
+            auto featureId = centroidGlobalId;
+            auto centroidNodeId = parentComputeNode->id;
+            centroidNodeId.push_back(i);
+            auto centroidNode = ComputeNode(centroidNodeId, featureId, parentComputeNode, parentComputeNode->root);
+
+            // auto numberOfCentroidChildren = parentTrainingNode->centroids.size();
+            trainingNodeToComputeNode2(&parentTrainingNode->children[i], &centroidNode);
+
+            parentComputeNode->children.push_back(centroidNode);
+        }
+
+        // for each centroid
+        // create centroid CN
+        // add children to centroid if they exist
+    }
+
+    return parentCN;
+};
+
+void trainingNodeToComputeNode(TrainingNode *parentTrainingNode, ComputeNode *parentComputeNode)
+{
+
+    ComputeNode *rootNode = parentComputeNode->root;
+
+    cout << "doing level";
+    centroidPrinter(parentTrainingNode->id);
+    cout << endl;
+
+    // cout << "mooop" << endl;
+    parentTrainingNode->centroids.size();
+    // cout << "moop2" << endl;
+    if (parentTrainingNode->centroids.size() == 1) // centroids.size() == 1
+    {
+        if (parentTrainingNode->level_data_indices.size() == 0)
+        {
+            cout << "no level data parent centroid is leaf" << endl;
+            // parent is leaf
+            parentComputeNode->isLeaf = true;
+        }
+        else
+        {
+            cout << "had level data need to add leaves" << parentTrainingNode->level_data_indices.size() << endl;
+            // add leaves
+            for (int i = 0; i < parentTrainingNode->level_data_indices.size(); i++)
+            {
+                // cout << "doing leaf" << i << endl;
+                vector<int> leafNodeId = parentComputeNode->id;
+                // cout << "pz0" << endl;
+                leafNodeId.push_back(i);
+                // cout << "doing leaf"; centroidPrinter(leafNodeId); cout << endl;
+                // cout << "pz1" << endl;
+                //             auto centroidLocalId = parentTrainingNode->centroids[i];
+                // (leafNodeId)
+                ComputeNode leaf = ComputeNode(leafNodeId, parentTrainingNode->level_data_indices[i], parentComputeNode, rootNode); // ComputeNode(vector<int> id, int feature_id, ComputeNode *parent, ComputeNode *root)
+                // cout << "pz2" << endl;
+                parentComputeNode->children.push_back(leaf);
+                // cout << "pz3" << endl;
+            }
+        }
+        /*cout << "centroid size zero" << endl; // we are at the end of the line no more children
+        if (parentTrainingNode->level_data_indices.size() == 0)
+        {
+            cout << "no level data parent centroid is leaf" << endl;
+            // parent is leaf
+            parentComputeNode->isLeaf = true;
+        }
+        else
+        {
+            cout << "had level data need to add leaves"  << parentTrainingNode->level_data_indices.size() << endl;
+            // add leaves
+            for (int i = 0; i < parentTrainingNode->level_data_indices.size(); i++)
+            {
+                cout << "doing leaf" << i << endl;
+                vector<int> leafNodeId = parentComputeNode->id;
+                cout << "pz0" << endl;
+                leafNodeId.push_back(i);
+                cout << "pz1" << endl;
+                //             auto centroidLocalId = parentTrainingNode->centroids[i];
+                // (leafNodeId)
+                ComputeNode leaf = ComputeNode(leafNodeId, parentTrainingNode->level_data_indices[i], parentComputeNode, rootNode); // ComputeNode(vector<int> id, int feature_id, ComputeNode *parent, ComputeNode *root)
+                cout << "pz2" << endl;
+                parentComputeNode->children.push_back(leaf);
+                cout << "pz3" << endl;
+            }
+        }*/
+    }
+    else
+    {
+        cout << "dealing with children" << endl;
+        // add each centroid to parent node which might be the root
+        // for each child add child to centroid parent
+        for (int i = 0; i < parentTrainingNode->centroids.size(); i++)
         {
             // get feature id
             auto centroidLocalId = parentTrainingNode->centroids[i];
+            // cout << "et1" << endl;
             auto centroidGlobalId = parentTrainingNode->level_data_indices[centroidLocalId];
+            // cout << "et2" << endl;
             auto featureId = centroidGlobalId;
 
             // get node id
             auto nodeId = parentComputeNode->id;
             nodeId.push_back(i);
+            // cout << "et3" << endl;
 
-            auto childNode = ComputeNode(nodeId, featureId, parentComputeNode, rootNode);
-            parentComputeNode->children.push_back(childNode);
+            // cout << "node id";
+            // centroidPrinter(nodeId); cout << endl;
+
+            auto centroidNode = ComputeNode(nodeId, featureId, parentComputeNode, rootNode);
+            // cout << "et4" << endl;
+            parentComputeNode->children.push_back(centroidNode);
+
+            // for the training nodes children
+            auto tnCentroidLevel = parentTrainingNode->children[i];
+            auto tnCentroidChildrenSize = parentTrainingNode->children[i].centroids.size();
+            auto tnCentroidChildren = parentTrainingNode->children[i].children;
+
+            if (tnCentroidChildrenSize < 8)
+            {
+                cout << "tnCentroidChildrenSize lt 8" << endl;
+                exit(1);
+            }
+
+            for (int j = 0; j < tnCentroidChildrenSize; j++)
+            {
+                auto centroidChildId = nodeId;
+                centroidChildId.push_back(j);
+                // auto centroidChild = ComputeNode(centroidChildId, )
+            }
 
             // process child training node
-            auto childTrainingNode = parentTrainingNode->children[i];
-            trainingNodeToComputeNode(&childTrainingNode, &childNode);
+            /*auto childTrainingNode = parentTrainingNode->children[i];
+            // cout << "et5" << endl;
+            trainingNodeToComputeNode(&childTrainingNode, &childNode);*/
         }
     }
 
@@ -329,12 +478,13 @@ ComputeNode trainingNodeToComputeNode(TrainingNode *parentTrainingNode, ComputeN
     }*/
 };
 
-void makeComputeModelFromTrainingModel(TrainingNode *rootTrainingNode) {
+ComputeNode makeComputeModelFromTrainingModel(TrainingNode *rootTrainingNode)
+{
     // create root compute node
-    ComputeNode root = ComputeNode();
-    trainingNodeToComputeNode(rootTrainingNode, &root);
+    cout << "ahhhh" << endl;
+    ComputeNode root = trainingNodeToComputeNode2(rootTrainingNode, nullptr);
+    return root;
 }
-
 
 // factory method
 
@@ -393,14 +543,28 @@ void trainModel(string modelName)
     // if the voctree file exists
     if (treeFileExists == true)
     {
-        exit(1); // this is broken fixme
+        // exit(1); // this is broken fixme
         json model = read_jsonfile(vocTree);
         TrainingNode rootNode = deserialise(vocTree, sData, model, nullptr, nullptr);
+        cout << "got root node" << endl;
+        auto computeNode = makeComputeModelFromTrainingModel(&rootNode);
+        cout << "built model" << endl;
+        json treeData = computeNode.serialise();
+        cout << "serialised" << endl;
+        std::string stringTreeData = treeData.dump();
+        cout << stringTreeData << endl;
+        // save to file
+        std::ofstream file("./helpme.json");
+        file << stringTreeData;
+
+        exit(1); // this is broken fixme
         rootNode.process();
         rootNode.save();
     }
     else
     {
+
+        exit(1);
         // {47743, 211873, 225696, 300333, 316793, 324287, 460397, 485301
         TrainingNode rootNode = TrainingNode(vocTree, sData, indices, {}, {0}, 8, 10, nullptr, nullptr);
         rootNode.process();
