@@ -164,12 +164,13 @@ tuple<long long, map<int, vector<int>>, vector<int>> optimiseCentroidSelectionAn
         */
         auto clusterResults = resultSetAgg[i]; // make_tuple(bestGlobalCentroidIndex, bestGlobalCentroidCost, newGlobalTotal);
         totalCost += get<2>(clusterResults);
-        int bestCentroid = get<0>(clusterResults); // this is local to dataIndicies
+        int bestCentroid = get<0>(clusterResults); // this is local to cluster!
         auto fullCluster = clusters[i]; // cluster including old centroid and new centroid
+        int localToDataIndiciesIdx = fullCluster[bestCentroid];
         // erase best centroid
         fullCluster.erase(fullCluster.begin() + bestCentroid);
         newClusterMembership[i] = fullCluster;
-        newCentroidIndices.push_back(bestCentroid);
+        newCentroidIndices.push_back(localToDataIndiciesIdx);
     }
 
     return make_tuple(totalCost, newClusterMembership, newCentroidIndices);

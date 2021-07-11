@@ -76,8 +76,14 @@ public:
         // if centroid seeds are incomplete
         if (this->centroids.size() != this->k)
         {
+            cout << "seeding";
+            centroidPrinter(this->id);
+            cout << endl;
             this->centroids = seedCentroids(this->level_data_indices, this->data, this->k, this->centroids);
         }
+
+
+
 
         this->clusterMembers = optimiseClusterMembership(this->level_data_indices, this->data, this->centroids, processor_count);
 
@@ -100,6 +106,7 @@ public:
                 this->currentPermutationCost = cost;
                 this->clusterMembers = clusterMembership;
                 this->centroids = centroids;
+                cout << "current centroids"; centroidPrinter(this->centroids); cout << endl;
             }
             else
             {
@@ -108,6 +115,7 @@ public:
             }
             iteration++;
         }
+
 
         // build children
         // FIXME SHOULD SKIP THIS IS WE HAVE BEEN DESERIALISED AKA THE CHILDREN CAN ALREADY EXIST
@@ -239,17 +247,10 @@ ns::person p {
 
 ComputeNode trainingNodeToComputeNode(TrainingNode *parentTrainingNode, ComputeNode *parentComputeNode)
 {
-    ComputeNode parentNode;
-    if (parentTrainingNode->parent == nullptr)
-    {
-        ComputeNode parentNode = ComputeNode();
-        parentComputeNode = &parentNode; // is this right?
-        // need to return parent node
-    }
 
     ComputeNode *rootNode = parentComputeNode->root;
 
-    if (parentTrainingNode->centroids.size() == 0)
+    if (parentTrainingNode->centroids.size() == 0) // centroids.size() == 1
     {
         if (parentTrainingNode->level_data_indices.size() == 0)
         {
