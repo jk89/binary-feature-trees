@@ -236,6 +236,7 @@ ns::person p {
     return node;
 }
 
+
 ComputeNode trainingNodeToComputeNode(TrainingNode *parentTrainingNode, ComputeNode *parentComputeNode)
 {
     ComputeNode parentNode;
@@ -329,6 +330,13 @@ ComputeNode trainingNodeToComputeNode(TrainingNode *parentTrainingNode, ComputeN
         }
     }*/
 };
+
+void makeComputeModelFromTrainingModel(TrainingNode *rootTrainingNode) {
+    // create root compute node
+    ComputeNode root = ComputeNode();
+    trainingNodeToComputeNode(rootTrainingNode, &root);
+}
+
 
 // factory method
 
