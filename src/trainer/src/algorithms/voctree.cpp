@@ -76,9 +76,6 @@ public:
         // if centroid seeds are incomplete
         if (this->centroids.size() != this->k)
         {
-            cout << "seeding";
-            centroidPrinter(this->id);
-            cout << endl;
             this->centroids = seedCentroids(this->level_data_indices, this->data, this->k, this->centroids);
         }
 
@@ -106,7 +103,7 @@ public:
                 this->currentPermutationCost = cost;
                 this->clusterMembers = clusterMembership;
                 this->centroids = centroids;
-                cout << "current centroids"; centroidPrinter(this->centroids); cout << endl;
+                // cout << "current centroids"; centroidPrinter(this->centroids); cout << endl;
             }
             else
             {
@@ -405,7 +402,7 @@ void trainModel(string modelName)
     else
     {
         // {47743, 211873, 225696, 300333, 316793, 324287, 460397, 485301
-        TrainingNode rootNode = TrainingNode(vocTree, sData, indices, {}, {0}, 8, 12, nullptr, nullptr);
+        TrainingNode rootNode = TrainingNode(vocTree, sData, indices, {}, {0}, 8, 10, nullptr, nullptr);
         rootNode.process();
         rootNode.save();
     }
