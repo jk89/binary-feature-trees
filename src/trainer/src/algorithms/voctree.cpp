@@ -13,7 +13,7 @@ public:
     vector<int> id;
     ComputeNode *parent;
     ComputeNode *root;
-    vector<uint8_t> feature;
+    cv::Mat feature; // vector<uint8_t>
     int feature_id = -1;
     vector<ComputeNode> children;
     bool isRoot = false;
@@ -33,6 +33,33 @@ public:
         jnode["children"] = children;
         return jnode;
     }
+    vector<vector<int>> getLeaves(vector<vector<int>> *_leaves)
+    {
+        vector<vector<int>> leaves;
+        if (_leaves == nullptr)
+        {
+            leaves = {};
+            _leaves = &leaves;
+        }
+        else
+        {
+            leaves = *_leaves;
+        }
+        if (this->isLeaf == false)
+        {
+            // iterate children
+            for (int i = 0; i < this->children.size(); i++)
+            {
+                this->children[i].getLeaves(_leaves);
+            }
+        }
+        else
+        {
+            _leaves->push_back(this->id);
+        }
+        return leaves;
+    }
+    void pack() {}
     void save()
     {
         if (this->parent == nullptr)
@@ -64,6 +91,59 @@ public:
         this->root = root;
         this->feature_id = feature_id;
     }
+};
+
+// leaf id's unique
+bool leaf_ids_unique(ComputeNode *parent)
+{
+    std::set<vector<int>> unique_leaf_ids;
+    vector<vector<int>> leaves = parent->getLeaves(nullptr);
+    for (int i = 0; i < leaves.size(); i++)
+    {
+        unique_leaf_ids.insert(leaves[i]);
+    }
+    return leaves.size() == unique_leaf_ids.size();
+};
+
+bool feature_ids_unique_internal(map<int, int> *duplicates, ComputeNode *parent)
+{
+    (*duplicates)[parent->feature_id]++;
+    for (int i = 0; i < parent->children.size(); i++)
+    {
+        feature_ids_unique_internal(duplicates, &(parent->children[i]));
+    }
+};
+
+bool feature_ids_unique(ComputeNode *parent)
+{
+    map<int, int> duplicatesMap = {};
+    feature_ids_unique_internal(&duplicatesMap, parent);
+    vector<int> invalidIds = {};
+    for (auto iter = duplicatesMap.begin(); iter != duplicatesMap.end(); ++iter) {
+        if (iter->second != 1) {
+            invalidIds.push_back(iter->second);
+        }
+    }
+    if (invalidIds.size() == 0) {
+        return true;
+    }
+    cout << "we had some duplicated feature ids"<< endl;
+    centroidPrinter(invalidIds); cout << endl;
+    return false;
+};
+
+
+// feature_id unique
+bool feature_ids_unique_(int *featureCount, ComputeNode *parent)
+{
+    std::set<int> unique_feature_ids;
+    (*featureCount)++;
+    unique_feature_ids.insert(parent->feature_id);
+    for (int i = 0; i < parent->children.size(); i++)
+    {
+        feature_ids_unique_(featureCount, &(parent->children[i]));
+    }
+    return (*featureCount) == unique_feature_ids.size();
 };
 
 ComputeNode trainingNodeToComputeNode2(TrainingNode *parentTrainingNode, ComputeNode *parentComputeNode)

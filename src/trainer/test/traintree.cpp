@@ -46,6 +46,9 @@ TEST(ShouldBuildSmallestModel, ShouldPass) {
     trainModelToComputeModel(modelName);
     auto model = getComputeModelByName(modelName);
     ASSERT_EQ(model.feature_id, -1);
+    ASSERT_EQ(true, feature_ids_unique(&model));
+    ASSERT_EQ(true, leaf_ids_unique(&model));
+
 }
 
 int main(int argc, char **argv) {
