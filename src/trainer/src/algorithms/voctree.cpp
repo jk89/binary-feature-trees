@@ -102,6 +102,7 @@ bool leaf_ids_unique(ComputeNode *parent)
     {
         unique_leaf_ids.insert(leaves[i]);
     }
+    cout << "total leaves" << leaves.size() << "|" << parent->root->modelName << endl;
     return leaves.size() == unique_leaf_ids.size();
 };
 
@@ -119,31 +120,24 @@ bool feature_ids_unique(ComputeNode *parent)
     map<int, int> duplicatesMap = {};
     feature_ids_unique_internal(&duplicatesMap, parent);
     vector<int> invalidIds = {};
-    for (auto iter = duplicatesMap.begin(); iter != duplicatesMap.end(); ++iter) {
-        if (iter->second != 1) {
-            invalidIds.push_back(iter->second);
+    int total = 0;
+    for (auto iter = duplicatesMap.begin(); iter != duplicatesMap.end(); ++iter)
+    {
+        if (iter->second != 1)
+        {
+            invalidIds.push_back(iter->first);
         }
+        total += iter->second;
     }
-    if (invalidIds.size() == 0) {
+    cout << total << " unique features" << endl;
+    if (invalidIds.size() == 0)
+    {
         return true;
     }
-    cout << "we had some duplicated feature ids"<< endl;
-    centroidPrinter(invalidIds); cout << endl;
+    cout << "we had some duplicated feature ids" << endl;
+    centroidPrinter(invalidIds);
+    cout << endl;
     return false;
-};
-
-
-// feature_id unique
-bool feature_ids_unique_(int *featureCount, ComputeNode *parent)
-{
-    std::set<int> unique_feature_ids;
-    (*featureCount)++;
-    unique_feature_ids.insert(parent->feature_id);
-    for (int i = 0; i < parent->children.size(); i++)
-    {
-        feature_ids_unique_(featureCount, &(parent->children[i]));
-    }
-    return (*featureCount) == unique_feature_ids.size();
 };
 
 ComputeNode trainingNodeToComputeNode2(TrainingNode *parentTrainingNode, ComputeNode *parentComputeNode)
@@ -232,6 +226,7 @@ ComputeNode deserialiseComputeNode(json model, ComputeNode *parent, ComputeNode 
     {
         node = ComputeNode(id, feature_id, parent, root);
     }
+    node.isLeaf = isLeaf;
 
     for (int i = 0; i < children.size(); i++)
     {

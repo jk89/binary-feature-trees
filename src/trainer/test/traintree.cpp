@@ -1,7 +1,6 @@
 #include <gtest/gtest.h>
 #include <climits>
 
-
 #include <opencv2/opencv.hpp>
 #include <opencv2/core/mat.hpp>
 #include <boost/filesystem.hpp>
@@ -32,15 +31,17 @@ namespace fs = boost::filesystem;
 
 const auto processor_count = std::thread::hardware_concurrency();
 
-TEST(ShouldBuildSmallestModel, ShouldPass) {
+TEST(ShouldBuildSmallestModel, ShouldPass)
+{
     // remove model files
-    
+
     string modelName = "smallest";
 
     //removeFileIfExist
     string vocTree = "data/" + modelName + "_voctree.json";
     string vocModel = "data/" + modelName + "_voccompute.json";
-    removeFileIfExist(vocTree); removeFileIfExist(vocModel);
+    removeFileIfExist(vocTree);
+    removeFileIfExist(vocModel);
 
     trainModel(modelName, 8, 12);
     trainModelToComputeModel(modelName);
@@ -48,10 +49,17 @@ TEST(ShouldBuildSmallestModel, ShouldPass) {
     ASSERT_EQ(model.feature_id, -1);
     ASSERT_EQ(true, feature_ids_unique(&model));
     ASSERT_EQ(true, leaf_ids_unique(&model));
-
 }
 
-int main(int argc, char **argv) {
+TEST(ShouldValidateBigModel, ShouldPass)
+{
+    auto model = getComputeModelByName("midsized");
+    ASSERT_EQ(true, feature_ids_unique(&model));
+    ASSERT_EQ(true, leaf_ids_unique(&model));
+}
+
+int main(int argc, char **argv)
+{
     testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
 }
