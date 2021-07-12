@@ -16,7 +16,9 @@
 #include "algorithms/cluster.cpp"
 #include "algorithms/optimise.cpp"
 #include "algorithms/kmedoids.cpp"
+#include "algorithms/voctrain.cpp"
 #include "algorithms/voctree.cpp"
+
 #include <time.h>
 // std::async, std::future
 
@@ -32,6 +34,6 @@ const auto processor_count = std::thread::hardware_concurrency();
 
 int main(int argc, char **argv)
 {
-    trainModel("smallest");
+    // trainModel("smallest", 8, processor_count);
     //kmedoids(sData, &origIndicies, 8, 1, {0}); exit(1);
 }

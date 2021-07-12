@@ -240,16 +240,25 @@ set(OpenCV_LIBS
   opencv_imgcodecs
 )
 
-include_directories(${OpenCV_INCLUDE_DIRS})
+find_package(GTest REQUIRED)
+
+
+include_directories(
+  ${OpenCV_INCLUDE_DIRS}
+  ${GTEST_INCLUDE_DIRS}
+)
 link_directories(${OpenCV_LIB_DIR})
 
 # set(CMAKE_PREFIX_PATH "${PROJECT_SOURCE_DIR}/src/json/build;${CMAKE_PREFIX_PATH})")
 # set(nlohmann_json_DIR "src/nlohmann_json")
 find_package(nlohmann_json REQUIRED)
+
+
 # add_subdirectory(nlohmann_json)
 # find_package(nlohmann_json REQUIRED)
 
 add_executable(${PROJECT_NAME} src/trainer.cpp)
+
 # target_link_libraries(${PROJECT_NAME} nlohmann_json::nlohmann_json)
 
 # target_link_libraries(${PROJECT_NAME} nlohmann_json::nlohmann_json)
@@ -258,3 +267,11 @@ target_link_libraries(${PROJECT_NAME} LINK_PUBLIC ${Boost_LIBRARIES})
 
 # add_executable( DisplayImage DisplayImage.cpp )
 #target_link_libraries( ${PROJECT_NAME} ${OpenCV_LIBS} )
+catkin_add_gtest(utest1  test/example.cpp)
+target_link_libraries(utest1 ${catkin_LIBRARIES})
+target_link_libraries(utest1 ${OpenCV_LIBS})
+target_link_libraries(utest1 LINK_PUBLIC ${Boost_LIBRARIES})
+catkin_add_gtest(utest2  test/traintree.cpp)
+target_link_libraries(utest2 ${catkin_LIBRARIES})
+target_link_libraries(utest2 ${OpenCV_LIBS})
+target_link_libraries(utest2 LINK_PUBLIC ${Boost_LIBRARIES})

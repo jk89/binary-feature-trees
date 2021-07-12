@@ -23,6 +23,28 @@
             "dependsOn": [
                 "catkin_build: build"
             ]
+        },
+        {
+            // /Code/UAV/binary-feature-trees/devel/.private/trainer/lib/trainer
+            // See https://go.microsoft.com/fwlink/?LinkId=733558
+            // for the documentation about the tasks.json format
+            "label": "test1",
+            "type": "shell",
+            "command": "cd build/trainer && make utest1 && cd ../../ && ./devel/.private/trainer/lib/trainer/utest1",
+            "dependsOn": [
+                "catkin_build: build"
+            ]
+        },
+        {
+            // /Code/UAV/binary-feature-trees/devel/.private/trainer/lib/trainer
+            // See https://go.microsoft.com/fwlink/?LinkId=733558
+            // for the documentation about the tasks.json format
+            "label": "test2",
+            "type": "shell",
+            "command": "cd build/trainer && make utest2 && cd ../../ && ./devel/.private/trainer/lib/trainer/utest2",
+            "dependsOn": [
+                "catkin_build: build"
+            ]
         }
     ]
 }
