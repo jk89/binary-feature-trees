@@ -184,7 +184,7 @@ ns::person p {
     j["age"].get<int>()
 };
     */
-    cout << "in deserialise" << endl;
+
     auto level_data_indices = model["data_indices"].get<vector<int>>();
     auto id = model["id"].get<vector<int>>();
     auto centroids = model["centroids"].get<vector<int>>();

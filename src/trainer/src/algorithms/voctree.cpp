@@ -40,7 +40,6 @@ public:
             // we are the route
             json data = this->serialise();
             std::string stringTreeData = data.dump();
-            cout << stringTreeData << endl;
             string vocModel = "data/" + this->modelName + "_voccompute.json";
             // save to file
             std::ofstream file(vocModel);
@@ -89,13 +88,13 @@ ComputeNode trainingNodeToComputeNode2(TrainingNode *parentTrainingNode, Compute
         // skipped as it was too small
         if (parentTrainingNode->level_data_indices.size() == 0)
         {
-            cout << "no level data parent centroid is leaf" << endl;
+            // cout << "no level data parent centroid is leaf" << endl;
             // parent is leaf
             parentComputeNode->isLeaf = true;
         }
         else
         {
-            cout << "had level data need to add leaves" << parentTrainingNode->level_data_indices.size() << endl;
+            // deserialisecout << "had level data need to add leaves" << parentTrainingNode->level_data_indices.size() << endl;
             // add leaves
             for (int i = 0; i < parentTrainingNode->level_data_indices.size(); i++)
             {
