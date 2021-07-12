@@ -34,6 +34,9 @@ const auto processor_count = std::thread::hardware_concurrency();
 
 int main(int argc, char **argv)
 {
+    string modelName = "midsized";
+    trainModelToComputeModel(modelName);
+    auto model = getComputeModelByName(modelName);
     // trainModel("smallest", 8, processor_count);
     //kmedoids(sData, &origIndicies, 8, 1, {0}); exit(1);
 }

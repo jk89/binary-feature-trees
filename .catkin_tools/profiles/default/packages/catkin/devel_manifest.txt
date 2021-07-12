@@ -12,6 +12,7 @@ catkin
 /home/jonathan/Code/UAV/binary-feature-trees/devel/.private/catkin/share/catkin/cmake/catkinConfig.cmake /home/jonathan/Code/UAV/binary-feature-trees/devel/share/catkin/cmake/catkinConfig.cmake
 /home/jonathan/Code/UAV/binary-feature-trees/devel/.private/catkin/lib/pkgconfig/catkin.pc /home/jonathan/Code/UAV/binary-feature-trees/devel/lib/pkgconfig/catkin.pc
 /home/jonathan/Code/UAV/binary-feature-trees/devel/.private/catkin/lib/python2.7/dist-packages/catkin/__init__.py /home/jonathan/Code/UAV/binary-feature-trees/devel/lib/python2.7/dist-packages/catkin/__init__.py
+/home/jonathan/Code/UAV/binary-feature-trees/devel/.private/catkin/lib/python2.7/dist-packages/catkin/__init__.pyc /home/jonathan/Code/UAV/binary-feature-trees/devel/lib/python2.7/dist-packages/catkin/__init__.pyc
 /home/jonathan/Code/UAV/binary-feature-trees/devel/.private/catkin/etc/catkin/profile.d/05.catkin_make_isolated.bash /home/jonathan/Code/UAV/binary-feature-trees/devel/etc/catkin/profile.d/05.catkin_make_isolated.bash
 /home/jonathan/Code/UAV/binary-feature-trees/devel/.private/catkin/etc/catkin/profile.d/05.catkin_make.bash /home/jonathan/Code/UAV/binary-feature-trees/devel/etc/catkin/profile.d/05.catkin_make.bash
 /home/jonathan/Code/UAV/binary-feature-trees/devel/.private/catkin/bin/catkin_init_workspace /home/jonathan/Code/UAV/binary-feature-trees/devel/bin/catkin_init_workspace

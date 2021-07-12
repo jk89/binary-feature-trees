@@ -269,9 +269,6 @@ void trainModel(string modelName, int k, int processor_count)
     }
     else
     {
-
-        exit(1);
-        // {47743, 211873, 225696, 300333, 316793, 324287, 460397, 485301
         TrainingNode rootNode = TrainingNode(vocTree, sData, indices, {}, {0}, k, processor_count, nullptr, nullptr);
         rootNode.process();
         rootNode.save();

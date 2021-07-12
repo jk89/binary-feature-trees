@@ -30,7 +30,6 @@ vector<vector<uint8_t>> matToVector(cv::Mat mat)
         }
         out.push_back(row);
     }
-        
 
     return out;
 }
@@ -90,7 +89,8 @@ map<int, vector<int>> distributeTasks(vector<int> &tasks, int partitions)
 vector<vector<int>> distributeTasksVec(vector<int> &tasks, int partitions)
 {
     vector<vector<int>> taskDistibution = {};
-    for (int i = 0; i < partitions; i++) {
+    for (int i = 0; i < partitions; i++)
+    {
         taskDistibution.push_back({});
     }
     // map<int, bool> partitionExists = {};
@@ -189,7 +189,8 @@ void centroidPrinter(vector<uint8_t> centroids)
 int hammingDistance(vector<uint8_t> v1, vector<uint8_t> v2)
 {
     int sum = 0;
-    for (int i = 0; i < v1.size(); i++) {
+    for (int i = 0; i < v1.size(); i++)
+    {
         sum += int(v1[i] ^ v2[i]);
     }
     return sum;
@@ -237,7 +238,13 @@ vector<int> getClusterKeys(map<int, vector<int>> m)
     return keys;
 }
 
-
+void removeFileIfExist(string path)
+{
+    if (remove(path) != 0)
+        cout << "Error deleting file: " << path << endl;
+    else
+        cout << "File successfully deleted: " << path << endl;
+}
 void clusterMembershipPrinter(map<int, vector<int>> clusterMembership)
 {
     cout << endl;

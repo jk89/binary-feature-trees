@@ -30,16 +30,22 @@ using namespace std::chrono;
 
 namespace fs = boost::filesystem;
 
-int add(int a, int b){
-    return a + b;
-}
+const auto processor_count = std::thread::hardware_concurrency();
 
-TEST(NumberCmpTest2, ShouldPass){
-    ASSERT_EQ(3, add(1,2));
-}
+TEST(ShouldBuildSmallestModel, ShouldPass) {
+    // remove model files
+    
+    string modelName = "smallest";
 
-TEST(NumberCmpTest3, ShouldFail){
-    ASSERT_EQ(INT_MAX, add(INT_MAX, 1));
+    //removeFileIfExist
+    string vocTree = "data/" + modelName + "_voctree.json";
+    string vocModel = "data/" + modelName + "_voccompute.json";
+    removeFileIfExist(vocTree); removeFileIfExist(vocModel);
+
+    trainModel(modelName, 8, 12);
+    trainModelToComputeModel(modelName);
+    auto model = getComputeModelByName(modelName);
+    ASSERT_EQ(model.feature_id, -1);
 }
 
 int main(int argc, char **argv) {
