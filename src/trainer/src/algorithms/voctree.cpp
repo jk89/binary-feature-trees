@@ -96,6 +96,10 @@ public:
 // leaf id's unique
 bool leaf_ids_unique(ComputeNode *parent)
 {
+    // int k = 10;
+    // int l = 5; 
+    // int expected_nodes = (int) ((pow((double) k, (double) L + 1) - 1) / (k - 1));
+
     std::set<vector<int>> unique_leaf_ids;
     vector<vector<int>> leaves = parent->getLeaves(nullptr);
     for (int i = 0; i < leaves.size(); i++)
