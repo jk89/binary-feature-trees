@@ -1,6 +1,8 @@
 # Binary-feature-trees v0.0.1
 
-
+Based of the paper "Bags of Binary Words for Fast Place Recognition in
+Image Sequences, Dorian G ́alvez-L  ́opez and Juan D. Tard  ́os, Member, IEEE" found here:
+http://doriangalvez.com/papers/GalvezTRO12.pdf
 
 1. install catkin-tools
 
