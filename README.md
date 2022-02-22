@@ -4,6 +4,8 @@ Based of the paper "Bags of Binary Words for Fast Place Recognition in
 Image Sequences, Dorian G ́alvez-L  ́opez and Juan D. Tard  ́os, Member, IEEE" found here:
 http://doriangalvez.com/papers/GalvezTRO12.pdf
 
+# Installation notes
+
 1. install catkin-tools
 
 sudo apt get install catkin
@@ -35,12 +37,12 @@ ext install betwo.b2-catkin-tools
 https://marketplace.visualstudio.com/items?itemName=betwo.b2-catkin-tools
 
 
-6.
-
-catkin build
+6. catkin build
 ./devel/lib/trainer/trainer 
 Hello World2
 
+
+# Sanity checker JS script
 
 var results = [];
 Object.keys(a.clusterMembers).forEach((idx) => {
