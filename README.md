@@ -4,6 +4,8 @@ Based of the paper "Bags of Binary Words for Fast Place Recognition in
 Image Sequences, Dorian G ́alvez-L  ́opez and Juan D. Tard  ́os, Member, IEEE" found here:
 http://doriangalvez.com/papers/GalvezTRO12.pdf
 
+Instead of using kmean for clustering, I chose to implement kmedoids PAM with k++ seeding.
+
 # Installation notes
 
 1. install catkin-tools
